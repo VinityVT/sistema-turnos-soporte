@@ -1,0 +1,634 @@
+﻿@model SIGESTEC.API.DTOs.EquipoCreacionDTO
+@{
+    ViewData["Title"] = "Nuevo Equipo";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow border-0 mt-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0"><i class="bi bi-plus-circle me-2"></i> @ViewData["Title"]</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Progreso del formulario -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                                <div class="progress-bar" id="formProgress" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted" id="progressText">0% completado</small>
+                        </div>
+                    </div>
+
+                    <div id="equipoForm">
+                        <!-- Mensajes de error/success -->
+                        <div id="alertContainer"></div>
+
+                        <!-- Información Básica - MEJORADO -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle text-primary me-2"></i>Información Básica del Equipo
+                            </h5>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="numeroSerie" class="form-control" placeholder=" " required />
+                                        <label for="numeroSerie" class="fw-semibold">Número de Serie *</label>
+                                        <div class="form-text">Ingrese el número de serie único del equipo</div>
+                                        <div class="invalid-feedback" id="numeroSerieError"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select id="tipo" class="form-select" required>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Laptop">💻 Laptop</option>
+                                            <option value="Desktop">🖥️ Desktop</option>
+                                            <option value="Servidor">🔧 Servidor</option>
+                                            <option value="Impresora">🖨️ Impresora</option>
+                                            <option value="Monitor">🖵 Monitor</option>
+                                            <option value="Tablet">📱 Tablet</option>
+                                            <option value="Otro">⚙️ Otro</option>
+                                        </select>
+                                        <label for="tipo" class="fw-semibold">Tipo de Equipo *</label>
+                                        <div class="invalid-feedback" id="tipoError"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="marca" class="form-control" placeholder=" " required />
+                                        <label for="marca" class="fw-semibold">Marca *</label>
+                                        <div class="form-text">Ej: Dell, HP, Lenovo, Apple</div>
+                                        <div class="invalid-feedback" id="marcaError"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" id="modelo" class="form-control" placeholder=" " required />
+                                        <label for="modelo" class="fw-semibold">Modelo *</label>
+                                        <div class="form-text">Ej: Latitude 5420, MacBook Pro, ThinkPad</div>
+                                        <div class="invalid-feedback" id="modeloError"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" id="fechaAdquisicion" class="form-control" required />
+                                        <label for="fechaAdquisicion" class="fw-semibold">Fecha de Adquisición *</label>
+                                        <div class="invalid-feedback" id="fechaAdquisicionError"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select id="estado" class="form-select">
+                                            <option value="Disponible" selected>✅ Disponible</option>
+                                            <option value="EnUso">👤 En Uso</option>
+                                            <option value="EnMantenimiento">🔧 En Mantenimiento</option>
+                                        </select>
+                                        <label for="estado" class="fw-semibold">Estado del Equipo</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="form-floating">
+                                    <textarea id="descripcion" class="form-control" placeholder=" " style="height: 100px"></textarea>
+                                    <label for="descripcion" class="fw-semibold">Descripción del Equipo</label>
+                                    <div class="form-text">Características especiales, ubicación, observaciones importantes</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Componentes - MEJORADO -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-motherboard text-primary me-2"></i>Componentes del Equipo
+                                    <span class="badge bg-primary ms-2" id="componentesCount">0</span>
+                                </h5>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="agregarComponente()">
+                                    <i class="bi bi-plus-circle me-1"></i> Agregar Componente
+                                </button>
+                            </div>
+
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <small>Agregue al menos un componente principal (como Procesador o Memoria RAM)</small>
+                            </div>
+
+                            <div id="componentesContainer">
+                                <!-- Los componentes se agregarán dinámicamente aquí -->
+                            </div>
+                        </div>
+
+                        <!-- Resumen antes de guardar -->
+                        <div class="card bg-light border-0 mb-4" id="resumenCard" style="display: none;">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">
+                                    <i class="bi bi-check-circle text-success me-2"></i>Resumen del Equipo
+                                </h6>
+                                <div class="row small">
+                                    <div class="col-md-6">
+                                        <strong>N° Serie:</strong> <span id="resumenSerie">-</span><br>
+                                        <strong>Tipo:</strong> <span id="resumenTipo">-</span><br>
+                                        <strong>Marca/Modelo:</strong> <span id="resumenMarcaModelo">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Estado:</strong> <span id="resumenEstado">-</span><br>
+                                        <strong>Componentes:</strong> <span id="resumenComponentes">0</span><br>
+                                        <strong>Fecha:</strong> <span id="resumenFecha">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                            <a asp-controller="Admin" asp-action="Equipos" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left me-1"></i> Volver
+                            </a>
+                            <button type="button" class="btn btn-success" onclick="crearEquipo()" id="btnGuardar">
+                                <i class="bi bi-check-lg me-1"></i> Guardar Equipo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para Componente -->
+<template id="componenteTemplate">
+    <div class="card componente-item mb-3 border-primary">
+        <div class="card-header bg-primary bg-opacity-10 py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Componente <span class="componente-index">1</span></span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarComponente(this)">
+                <i class="bi bi-trash"></i> Eliminar
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input type="text" class="form-control componente-nombre" placeholder=" " required />
+                        <label class="fw-semibold">Nombre del Componente *</label>
+                        <div class="form-text">Ej: Procesador, RAM, Disco Duro</div>
+                        <div class="invalid-feedback">El nombre es requerido</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input type="text" class="form-control componente-serie" placeholder=" " />
+                        <label>Número de Serie</label>
+                        <div class="form-text">Opcional</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input type="text" class="form-control componente-modelo" placeholder=" " />
+                        <label>Modelo</label>
+                        <div class="form-text">Ej: i7-10700, DDR4 8GB</div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-floating">
+                        <input type="text" class="form-control componente-marca" placeholder=" " />
+                        <label>Marca</label>
+                        <div class="form-text">Ej: Intel, Samsung</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-8">
+                    <div class="form-floating">
+                        <textarea class="form-control componente-especificaciones" placeholder=" " style="height: 80px"></textarea>
+                        <label>Especificaciones Técnicas</label>
+                        <div class="form-text">Detalles como capacidad, velocidad, características</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <select class="form-select componente-estado">
+                            <option value="Operativo" selected>✅ Operativo</option>
+                            <option value="Mantenimiento">🔧 En Mantenimiento</option>
+                            <option value="Fallando">⚠️ Fallando</option>
+                        </select>
+                        <label>Estado del Componente</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let componenteCount = 0;
+
+        $(document).ready(function() {
+            // Establecer fecha actual por defecto
+            $('#fechaAdquisicion').val(new Date().toISOString().split('T')[0]);
+
+            // Agregar un componente inicial
+            agregarComponente();
+
+            // Validación en tiempo real y progreso
+            $('input, select, textarea').on('input blur', function() {
+                if (this.hasAttribute('required')) {
+                    validarCampo($(this));
+                }
+                actualizarProgreso();
+                actualizarResumen();
+            });
+
+            // Actualizar progreso inicial
+            actualizarProgreso();
+        });
+
+        function agregarComponente() {
+            const template = document.getElementById('componenteTemplate');
+            const clone = template.content.cloneNode(true);
+            const componenteElement = clone.querySelector('.componente-item');
+
+            componenteCount++;
+
+            // Actualizar índice del componente
+            componenteElement.querySelector('.componente-index').textContent = componenteCount;
+
+            // Agregar eventos de validación
+            const inputs = componenteElement.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.hasAttribute('required')) {
+                        validarCampo($(this));
+                    }
+                    actualizarProgreso();
+                    actualizarResumen();
+                });
+            });
+
+            document.getElementById('componentesContainer').appendChild(componenteElement);
+            actualizarContadorComponentes();
+            actualizarProgreso();
+        }
+
+        function eliminarComponente(button) {
+            if (document.querySelectorAll('.componente-item').length > 1) {
+                button.closest('.componente-item').remove();
+                componenteCount--;
+                actualizarContadorComponentes();
+                actualizarProgreso();
+                actualizarResumen();
+            } else {
+                mostrarAlertaModal('warning', 'El equipo debe tener al menos un componente.');
+            }
+        }
+
+        function actualizarContadorComponentes() {
+            const count = document.querySelectorAll('.componente-item').length;
+            document.getElementById('componentesCount').textContent = count;
+        }
+
+        function validarCampo(campo) {
+            if (!campo.val().trim()) {
+                campo.addClass('is-invalid');
+                return false;
+            } else {
+                campo.removeClass('is-invalid');
+                return true;
+            }
+        }
+
+        function actualizarProgreso() {
+            let camposCompletados = 0;
+            let totalCampos = 0;
+
+            // Campos principales requeridos
+            const camposPrincipales = ['#numeroSerie', '#tipo', '#marca', '#modelo', '#fechaAdquisicion'];
+            totalCampos += camposPrincipales.length;
+
+            camposPrincipales.forEach(campo => {
+                if ($(campo).val().trim()) camposCompletados++;
+            });
+
+            // Componentes requeridos
+            const componentes = document.querySelectorAll('.componente-item');
+            totalCampos += componentes.length; // Cada componente debe tener al menos el nombre
+
+            componentes.forEach(componente => {
+                const nombre = componente.querySelector('.componente-nombre');
+                if (nombre.value.trim()) camposCompletados++;
+            });
+
+            const porcentaje = Math.round((camposCompletados / totalCampos) * 100);
+            $('#formProgress').css('width', porcentaje + '%');
+            $('#progressText').text(porcentaje + '% completado');
+
+            // Cambiar color del progreso según el porcentaje
+            const progressBar = $('#formProgress');
+            progressBar.removeClass('bg-danger bg-warning bg-success');
+            if (porcentaje < 50) {
+                progressBar.addClass('bg-danger');
+            } else if (porcentaje < 100) {
+                progressBar.addClass('bg-warning');
+            } else {
+                progressBar.addClass('bg-success');
+            }
+        }
+
+        function actualizarResumen() {
+            const tieneDatos = $('#numeroSerie').val().trim() && $('#tipo').val() && $('#marca').val().trim();
+
+            if (tieneDatos) {
+                $('#resumenCard').show();
+                $('#resumenSerie').text($('#numeroSerie').val() || '-');
+                $('#resumenTipo').text($('#tipo').val() || '-');
+                $('#resumenMarcaModelo').text(($('#marca').val() || '') + ' ' + ($('#modelo').val() || ''));
+                $('#resumenEstado').text($('#estado').val() || '-');
+                $('#resumenComponentes').text(document.querySelectorAll('.componente-item').length);
+                $('#resumenFecha').text($('#fechaAdquisicion').val() || '-');
+            } else {
+                $('#resumenCard').hide();
+            }
+        }
+
+        function validarFormulario() {
+            let isValid = true;
+
+            // Validar campos principales
+            const camposRequeridos = [
+                { id: '#numeroSerie', error: '#numeroSerieError', mensaje: 'El número de serie es requerido' },
+                { id: '#tipo', error: '#tipoError', mensaje: 'El tipo de equipo es requerido' },
+                { id: '#marca', error: '#marcaError', mensaje: 'La marca es requerida' },
+                { id: '#modelo', error: '#modeloError', mensaje: 'El modelo es requerido' },
+                { id: '#fechaAdquisicion', error: '#fechaAdquisicionError', mensaje: 'La fecha de adquisición es requerida' }
+            ];
+
+            camposRequeridos.forEach(campo => {
+                const elemento = $(campo.id);
+                if (!elemento.val().trim()) {
+                    elemento.addClass('is-invalid');
+                    $(campo.error).text(campo.mensaje);
+                    isValid = false;
+                } else {
+                    elemento.removeClass('is-invalid');
+                }
+            });
+
+            // Validar componentes
+            let componentesValidos = true;
+            document.querySelectorAll('.componente-item').forEach((item, index) => {
+                const nombre = item.querySelector('.componente-nombre');
+                if (!nombre.value.trim()) {
+                    nombre.classList.add('is-invalid');
+                    componentesValidos = false;
+                } else {
+                    nombre.classList.remove('is-invalid');
+                }
+            });
+
+            if (!componentesValidos) {
+                mostrarAlertaModal('warning', 'Todos los componentes deben tener un nombre.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function obtenerDatosEquipo() {
+            const componentes = [];
+
+            document.querySelectorAll('.componente-item').forEach((item, index) => {
+                componentes.push({
+                    nombre: item.querySelector('.componente-nombre').value,
+                    numeroSerie: item.querySelector('.componente-serie').value,
+                    modelo: item.querySelector('.componente-modelo').value,
+                    marca: item.querySelector('.componente-marca').value,
+                    especificaciones: item.querySelector('.componente-especificaciones').value,
+                    estado: item.querySelector('.componente-estado').value
+                });
+            });
+
+            return {
+                numeroSerie: $('#numeroSerie').val(),
+                tipo: $('#tipo').val(),
+                marca: $('#marca').val(),
+                modelo: $('#modelo').val(),
+                fechaAdquisicion: $('#fechaAdquisicion').val(),
+                estado: $('#estado').val(),
+                descripcion: $('#descripcion').val(),
+                componentes: componentes
+            };
+        }
+
+        async function crearEquipo() {
+            if (!validarFormulario()) {
+                mostrarAlertaModal('danger', 'Por favor, complete todos los campos requeridos correctamente.');
+                return;
+            }
+
+            const equipoData = obtenerDatosEquipo();
+
+            try {
+                // Mostrar loading
+                showLoadingModal('Creando equipo...');
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch('/Admin/CrearEquipo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify(equipoData)
+                });
+
+                if (response.ok) {
+                    hideLoadingModal();
+                    showSuccessModal('Equipo Creado', '✅ Equipo creado exitosamente! Redirigiendo...');
+
+                    setTimeout(() => {
+                        window.location.href = '/Admin/Equipos';
+                    }, 2000);
+
+                } else {
+                    const errorData = await response.json();
+                    hideLoadingModal();
+                    mostrarAlertaModal('danger', '❌ ' + (errorData.message || 'Error al crear el equipo'));
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                hideLoadingModal();
+                mostrarAlertaModal('danger', '❌ Error de conexión. Intente nuevamente.');
+            }
+        }
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = true) {
+            // Configurar como éxito
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function mostrarAlertaModal(tipo, mensaje, autoClose = true) {
+            // Configurar según el tipo
+            const icon = tipo === 'success' ? 'bi-check-circle-fill' :
+                        tipo === 'warning' ? 'bi-exclamation-triangle-fill' :
+                        'bi-exclamation-triangle-fill';
+
+            const buttonClass = tipo === 'success' ? 'btn-success' :
+                              tipo === 'warning' ? 'btn-warning' : 'btn-danger';
+
+            const iconClass = tipo === 'success' ? 'text-success' :
+                            tipo === 'warning' ? 'text-warning' : 'text-danger';
+
+            $('#successModalIcon').removeClass('text-success text-warning text-danger bi-check-circle-fill bi-exclamation-triangle-fill')
+                                 .addClass(iconClass + ' ' + icon);
+            $('#successModalButton').removeClass('btn-success btn-warning btn-danger').addClass(buttonClass);
+            $('#successModalTitle').text(tipo === 'success' ? '¡Éxito!' :
+                                       tipo === 'warning' ? 'Advertencia' : 'Error');
+            $('#successModalMessage').text(mensaje);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                const duration = tipo === 'success' ? 3000 :
+                               tipo === 'warning' ? 4000 : 5000;
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, duration);
+            }
+        }
+
+        // Función original de mostrarAlerta (mantener para compatibilidad)
+        function mostrarAlerta(mensaje, tipo) {
+            mostrarAlertaModal(tipo, mensaje);
+        }
+    </script>
+
+    <style>
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .componente-item {
+            transition: all 0.3s ease;
+        }
+
+            .componente-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+        .progress {
+            background-color: #e9ecef;
+        }
+
+        #resumenCard {
+            transition: all 0.3s ease;
+        }
+
+        /* Estilos para los modales de éxito y carga */
+        #successModal .modal-content,
+        #loadingModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        /* Estilos para el modal de carga */
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+}

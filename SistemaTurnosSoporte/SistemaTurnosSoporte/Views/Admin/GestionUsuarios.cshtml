@@ -1,0 +1,1944 @@
+﻿@model List<SIGESTEC.API.DTOs.UsuarioInfoDTO>
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+    var totalUsuarios = Model?.Count ?? 0;
+    var activos = Model?.Count(u => !u.Bloqueado) ?? 0;
+    var bloqueados = Model?.Count(u => u.Bloqueado) ?? 0;
+    var administradores = Model?.Count(u => u.Roles.Contains("Admin")) ?? 0;
+    var tecnicos = Model?.Count(u => u.Roles.Contains("Tecnico")) ?? 0;
+    var empleados = Model?.Count(u => u.Roles.Contains("Empleado")) ?? 0;
+    var recientes = Model?.Count(u => EsUsuarioReciente(u.FechaCreacion)) ?? 0;
+}
+
+<div class="container-fluid">
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="bi bi-people-fill text-primary me-2"></i>@ViewData["Title"]
+            </h1>
+            <p class="text-muted mb-0">Administra usuarios, roles y permisos del sistema</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="d-flex gap-2">
+                <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                </a>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">
+                    <i class="bi bi-person-add me-2"></i> Nuevo Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Control Principal -->
+    <div class="row">
+        <!-- Barra Lateral de Filtros -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>Filtrar Usuarios
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Búsqueda -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Buscar</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Nombre, email..." id="searchInput">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Estado</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="status" data-value="all">
+                                Todos (@totalUsuarios)
+                            </button>
+                            <button class="btn btn-sm btn-outline-success filter-btn" data-filter="status" data-value="active">
+                                Activos (@activos)
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="status" data-value="blocked">
+                                Bloqueados (@bloqueados)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Rol</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="role" data-value="all">
+                                Todos
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="role" data-value="Admin">
+                                Administradores (@administradores)
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="role" data-value="Tecnico">
+                                Técnicos (@tecnicos)
+                            </button>
+                            <button class="btn btn-sm btn-outline-info filter-btn" data-filter="role" data-value="Empleado">
+                                Empleados (@empleados)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Antigüedad</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="recent" data-value="all">
+                                Todos
+                            </button>
+                            <button class="btn btn-sm btn-outline-success filter-btn" data-filter="recent" data-value="recent">
+                                Nuevos (7 días) (@recientes)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Acciones Rápidas -->
+                    <div class="mt-4 pt-3 border-top">
+                        <label class="form-label small fw-bold">Acciones Rápidas</label>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userModal">
+                                <i class="bi bi-person-plus me-1"></i>Crear Usuario
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="refreshButton">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Principal de Usuarios -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list-ul me-2"></i>Lista de Usuarios
+                                <span class="badge bg-primary ms-2" id="userCount">@totalUsuarios</span>
+                            </h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="sortByName">
+                                    <i class="bi bi-sort-alpha-down"></i> Nombre
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="sortByDate">
+                                    <i class="bi bi-sort-numeric-down"></i> Fecha
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <!-- Estado Vacío -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-people display-1 text-muted opacity-25"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No hay usuarios registrados</h5>
+                            <p class="text-muted mb-4">Comienza agregando el primer usuario al sistema</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">
+                                <i class="bi bi-person-plus me-2"></i>Crear Primer Usuario
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Vista de Tarjetas (Mobile) -->
+                        <div class="d-lg-none">
+                            <div class="row g-3 p-3" id="usersCardView">
+                                @foreach (var usuario in Model.OrderBy(u => u.NombreCompleto))
+                                {
+                                    <div class="col-12 user-card"
+                                         data-status="@(usuario.Bloqueado ? "blocked" : "active")"
+                                         data-roles="@string.Join(",", usuario.Roles)"
+                                         data-recent="@(EsUsuarioReciente(usuario.FechaCreacion) ? "recent" : "old")"
+                                         data-name="@usuario.NombreCompleto.ToLower()"
+                                         data-date="@usuario.FechaCreacion.ToString("yyyyMMdd")"
+                                         data-user-id="@usuario.Id">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body">
+                                                <!-- Header de la Tarjeta -->
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-person-fill text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0 fw-bold">@usuario.NombreCompleto</h6>
+                                                            <small class="text-muted">@usuario.Email</small>
+                                                        </div>
+                                                    </div>
+                                                    @if (EsUsuarioReciente(usuario.FechaCreacion))
+                                                    {
+                                                        <span class="badge bg-success">Nuevo</span>
+                                                    }
+                                                </div>
+
+                                                <!-- Información del Usuario -->
+                                                <div class="mb-3">
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        @foreach (var role in usuario.Roles)
+                                                        {
+                                                            <span class="badge @GetRoleBadge(role)">@role</span>
+                                                        }
+                                                    </div>
+                                                    <div class="d-flex gap-2">
+                                                        <span class="badge @(usuario.Bloqueado ? "bg-danger" : "bg-success")">
+                                                            <i class="bi @(usuario.Bloqueado ? "bi-lock-fill" : "bi-unlock-fill") me-1"></i>
+                                                            @(usuario.Bloqueado ? "Bloqueado" : "Activo")
+                                                        </span>
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-person me-1"></i>
+                                                            @(usuario.EsTecnico ? "Técnico" : "Empleado")
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Acciones -->
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn btn-outline-primary btn-sm"
+                                                            onclick="showUserDetails('@usuario.Id')">
+                                                        <i class="bi bi-eye me-1"></i>Ver Detalles
+                                                    </button>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <button class="btn btn-outline-warning btn-sm"
+                                                                onclick="showEditUserModal('@usuario.Id')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        @if (usuario.Bloqueado)
+                                                        {
+                                                            <form asp-action="BloquearUsuario" method="post" class="d-inline flex-fill">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@usuario.Id" />
+                                                                <input type="hidden" name="bloquear" value="false" />
+                                                                <button type="submit" class="btn btn-outline-success btn-sm w-100"
+                                                                        onclick="return confirmarAccion('desbloquear', '@usuario.NombreCompleto')">
+                                                                    <i class="bi bi-unlock"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        else
+                                                        {
+                                                            <form asp-action="BloquearUsuario" method="post" class="d-inline flex-fill">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@usuario.Id" />
+                                                                <input type="hidden" name="bloquear" value="true" />
+                                                                <button type="submit" class="btn btn-outline-warning btn-sm w-100"
+                                                                        onclick="return confirmarAccion('bloquear', '@usuario.NombreCompleto')">
+                                                                    <i class="bi bi-lock"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        <button class="btn btn-outline-info btn-sm"
+                                                                onclick="showResetPasswordModal('@usuario.Id', '@usuario.NombreCompleto')">
+                                                            <i class="bi bi-key"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Vista de Tabla (Desktop) -->
+                        <div class="d-none d-lg-block">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Usuario</th>
+                                            <th>Información</th>
+                                            <th>Estado</th>
+                                            <th>Registro</th>
+                                            <th class="text-end pe-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableView">
+                                        @foreach (var usuario in Model.OrderBy(u => u.NombreCompleto))
+                                        {
+                                            <tr class="user-row"
+                                                data-status="@(usuario.Bloqueado ? "blocked" : "active")"
+                                                data-roles="@string.Join(",", usuario.Roles)"
+                                                data-recent="@(EsUsuarioReciente(usuario.FechaCreacion) ? "recent" : "old")"
+                                                data-name="@usuario.NombreCompleto.ToLower()"
+                                                data-date="@usuario.FechaCreacion.ToString("yyyyMMdd")"
+                                                data-user-id="@usuario.Id">
+                                                <td class="ps-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-person-fill text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">@usuario.NombreCompleto</div>
+                                                            <small class="text-muted">@usuario.Email</small>
+                                                            @if (EsUsuarioReciente(usuario.FechaCreacion))
+                                                            {
+                                                                <span class="badge bg-success mt-1">Nuevo</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        @foreach (var role in usuario.Roles)
+                                                        {
+                                                            <span class="badge @GetRoleBadge(role)">@role</span>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @(usuario.Bloqueado ? "bg-danger" : "bg-success") mb-1">
+                                                        <i class="bi @(usuario.Bloqueado ? "bi-lock-fill" : "bi-unlock-fill") me-1"></i>
+                                                        @(usuario.Bloqueado ? "Bloqueado" : "Activo")
+                                                    </span>
+                                                    <br>
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-person me-1"></i>
+                                                        @(usuario.EsTecnico ? "Técnico" : "Empleado")
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">@usuario.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-clock me-1"></i>@usuario.FechaCreacion.ToString("HH:mm")
+                                                    </small>
+                                                    <br>
+                                                    <small class="text-info">@GetTiempoTranscurrido(usuario.FechaCreacion)</small>
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-info"
+                                                                onclick="showUserDetails('@usuario.Id')"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Ver detalles">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-warning"
+                                                                onclick="showEditUserModal('@usuario.Id')"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Editar">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        @if (usuario.Bloqueado)
+                                                        {
+                                                            <form asp-action="BloquearUsuario" method="post" class="d-inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@usuario.Id" />
+                                                                <input type="hidden" name="bloquear" value="false" />
+                                                                <button type="submit" class="btn btn-outline-success"
+                                                                        data-bs-toggle="tooltip"
+                                                                        title="Desbloquear"
+                                                                        onclick="return confirmarAccion('desbloquear', '@usuario.NombreCompleto')">
+                                                                    <i class="bi bi-unlock"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        else
+                                                        {
+                                                            <form asp-action="BloquearUsuario" method="post" class="d-inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@usuario.Id" />
+                                                                <input type="hidden" name="bloquear" value="true" />
+                                                                <button type="submit" class="btn btn-outline-warning"
+                                                                        data-bs-toggle="tooltip"
+                                                                        title="Bloquear"
+                                                                        onclick="return confirmarAccion('bloquear', '@usuario.NombreCompleto')">
+                                                                    <i class="bi bi-lock"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        <button class="btn btn-outline-primary"
+                                                                onclick="showResetPasswordModal('@usuario.Id', '@usuario.NombreCompleto')"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Reiniciar contraseña">
+                                                            <i class="bi bi-key"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model != null && Model.Any())
+                {
+                    <div class="card-footer bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Mostrando <span id="filteredCount">@totalUsuarios</span> de <span id="totalCount">@totalUsuarios</span> usuarios
+                            </small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Detalles de Usuario -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="userDetailsModalLabel">
+                    <i class="bi bi-person-badge me-2"></i>Detalles del Usuario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Cargando información del usuario...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" id="editFromDetailsBtn" style="display: none;">
+                    <i class="bi bi-pencil me-1"></i> Editar Usuario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Edición -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editUserModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Editar Usuario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body" id="editUserContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando información del usuario...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="saveUserButton">
+                        <i class="bi bi-check-circle me-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Reiniciar Contraseña -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reiniciar Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="resetPasswordForm" asp-action="ReiniciarPassword" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body" id="resetPasswordContent">
+                    <input type="hidden" id="resetUserId" name="id" />
+                    <div class="alert alert-info">
+                        <i class="bi bi-key me-2"></i>
+                        <span id="resetUserInfo">Reiniciar contraseña para: </span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">Nueva Contraseña *</label>
+                        <input type="password" class="form-control" id="newPassword" name="nuevaPassword"
+                               placeholder="Ingrese la nueva contraseña" required minlength="8">
+                        <div class="form-text">Mínimo 8 caracteres</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirmar Contraseña *</label>
+                        <input type="password" class="form-control" id="confirmPassword"
+                               placeholder="Confirme la nueva contraseña" required>
+                        <div class="invalid-feedback" id="passwordError">Las contraseñas no coinciden</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="confirmResetButton">Reiniciar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear Usuario -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="userModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>Crear Nuevo Usuario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="userForm" asp-action="CreateUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nombreCompleto" class="form-label fw-medium">Nombre Completo *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" id="nombreCompleto" name="nombreCompleto"
+                                           placeholder="Ej: Juan Pérez García" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-medium">Correo Electrónico *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="email" name="email"
+                                           placeholder="ejemplo@empresa.com" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userType" class="form-label fw-medium">Tipo de Usuario *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                    <select class="form-select" id="userType" name="userType" required>
+                                        <option value="">Seleccionar tipo de usuario...</option>
+                                        <option value="Usuario">👨‍💼 Usuario (Empleado)</option>
+                                        <option value="Tecnico">🔧 Técnico de Soporte</option>
+                                        <option value="Admin">⚙️ Administrador del Sistema</option>
+                                    </select>
+                                </div>
+                                <div class="form-text">Define los permisos y acceso del usuario</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label fw-medium">Contraseña *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password"
+                                           placeholder="Mínimo 8 caracteres" required minlength="8">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password"
+                                            data-target="password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength mt-1">
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar" id="passwordStrength" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="passwordFeedback">Seguridad de la contraseña</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirmPasswordCreate" class="form-label fw-medium">Confirmar Contraseña *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                    <input type="password" class="form-control" id="confirmPasswordCreate"
+                                           placeholder="Repetir contraseña" required>
+                                    <button type="button" class="btn btn-outline-secondary toggle-password"
+                                            data-target="confirmPasswordCreate">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text" id="confirmFeedback">Las contraseñas deben coincidir</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos para Empleados -->
+                    <div id="employeeFields" style="display: none;">
+                        <hr>
+                        <h6 class="text-primary mb-3"><i class="bi bi-building me-2"></i>Información del Empleado</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono de Contacto</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        <input type="tel" class="form-control" id="telefono" name="telefono"
+                                               placeholder="Ej: +1 234 567 8900">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label">Departamento</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
+                                        <input type="text" class="form-control" id="departamento" name="departamento"
+                                               placeholder="Ej: Recursos Humanos">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="posicion" class="form-label">Posición/Cargo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                        <input type="text" class="form-control" id="posicion" name="posicion"
+                                               placeholder="Ej: Analista Senior">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-person-plus me-1"></i>Crear Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Acciones Críticas -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirmar Acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning display-4"></i>
+                </div>
+                <h6 id="confirmationModalMessage" class="mb-3">¿Está seguro de realizar esta acción?</h6>
+                <p id="confirmationModalDetails" class="text-muted small"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" id="confirmActionBtn">
+                    <i class="bi bi-check-circle me-2"></i>Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Variables globales para control del estado
+        let uniqueUserIds = new Set();
+        let currentSort = 'name';
+        let sortDirection = 'asc';
+        let pendingAction = null;
+        let pendingForm = null;
+        let pendingReload = false;
+
+        $(document).ready(function() {
+            // Configuración inicial con tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip({
+                template: '<div class="tooltip" role="tooltip"><div class="tooltip-inner"></div><div class="tooltip-arrow"></div></div>'
+            });
+
+            // Inicializar el set de usuarios únicos
+            initializeUniqueUsers();
+
+            // === CONFIGURACIÓN DE EVENTOS ===
+
+            // Filtros con botones
+            $('.filter-btn').click(function() {
+                const filterType = $(this).data('filter');
+                const value = $(this).data('value');
+
+                $(`.filter-btn[data-filter="${filterType}"]`).removeClass('active');
+                $(this).addClass('active');
+                applyFilters();
+            });
+
+            // Búsqueda en tiempo real
+            $('#searchInput').on('keyup', applyFilters);
+            $('#clearSearch').click(function() {
+                $('#searchInput').val('');
+                applyFilters();
+            });
+
+            // Ordenamiento - CORREGIDO
+            $('#sortByName').click(function() {
+                if (currentSort === 'name') {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = 'name';
+                    sortDirection = 'asc';
+                }
+                $(this).addClass('active').siblings().removeClass('active');
+                const icon = $(this).find('i');
+                if (sortDirection === 'asc') {
+                    icon.removeClass('bi-sort-alpha-down').addClass('bi-sort-alpha-up');
+                } else {
+                    icon.removeClass('bi-sort-alpha-up').addClass('bi-sort-alpha-down');
+                }
+                applySorting();
+            });
+
+            $('#sortByDate').click(function() {
+                if (currentSort === 'date') {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = 'date';
+                    sortDirection = 'desc'; // Por defecto: más recientes primero
+                }
+                $(this).addClass('active').siblings().removeClass('active');
+                const icon = $(this).find('i');
+                if (sortDirection === 'asc') {
+                    icon.removeClass('bi-sort-numeric-down').addClass('bi-sort-numeric-up');
+                } else {
+                    icon.removeClass('bi-sort-numeric-up').addClass('bi-sort-numeric-down');
+                }
+                applySorting();
+            });
+
+            // Refresh
+            $('#refreshButton').click(function() {
+                $(this).find('i').addClass('spin');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            });
+
+            // Validación de contraseñas
+            $('#confirmPassword').on('keyup', validatePasswordMatch);
+            $('#confirmPasswordCreate').on('keyup', validateCreatePasswordMatch);
+
+            // Toggle campos de empleado
+            $('#userType').change(function() {
+                const userType = $(this).val();
+                if (userType === 'Usuario') {
+                    $('#employeeFields').slideDown(300);
+                } else {
+                    $('#employeeFields').slideUp(300);
+                }
+            });
+
+            // Toggle visibilidad de contraseña
+            $('.toggle-password').click(function() {
+                const target = $(this).data('target');
+                const input = $('#' + target);
+                const icon = $(this).find('i');
+
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+
+            // Validación de fortaleza de contraseña
+            $('#password').on('input', function() {
+                const password = $(this).val();
+                const strengthBar = $('#passwordStrength');
+                const feedback = $('#passwordFeedback');
+
+                let strength = 0;
+                let message = 'Seguridad de la contraseña';
+                let color = 'bg-danger';
+
+                if (password.length >= 8) strength += 25;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 25;
+                if (password.match(/\d/)) strength += 25;
+                if (password.match(/[^a-zA-Z\d]/)) strength += 25;
+
+                if (strength >= 75) {
+                    message = 'Contraseña fuerte ✓';
+                    color = 'bg-success';
+                } else if (strength >= 50) {
+                    message = 'Contraseña media';
+                    color = 'bg-warning';
+                } else if (strength >= 25) {
+                    message = 'Contraseña débil';
+                    color = 'bg-danger';
+                } else {
+                    message = 'Muy débil';
+                    color = 'bg-danger';
+                }
+
+                strengthBar.css('width', strength + '%').removeClass('bg-danger bg-warning bg-success').addClass(color);
+                feedback.text(message);
+            });
+
+            // Validación de confirmación de contraseña
+            $('#confirmPasswordCreate').on('input', function() {
+                const password = $('#password').val();
+                const confirm = $(this).val();
+                const feedback = $('#confirmFeedback');
+
+                if (confirm === '') {
+                    feedback.text('Las contraseñas deben coincidir').removeClass('text-success text-danger').addClass('text-muted');
+                    $(this).removeClass('is-valid is-invalid');
+                } else if (password === confirm) {
+                    feedback.text('✓ Las contraseñas coinciden').removeClass('text-muted text-danger').addClass('text-success');
+                    $(this).removeClass('is-invalid').addClass('is-valid');
+                } else {
+                    feedback.text('✗ Las contraseñas no coinciden').removeClass('text-muted text-success').addClass('text-danger');
+                    $(this).removeClass('is-valid').addClass('is-invalid');
+                }
+            });
+
+            // === FORMULARIO DE CREACIÓN DE USUARIO ===
+            $('#userForm').submit(function(e) {
+                e.preventDefault();
+
+                const password = $('#password').val();
+                const confirmPassword = $('#confirmPasswordCreate').val();
+                const userType = $('#userType').val();
+
+                // Validaciones
+                if (!userType) {
+                    showErrorModal('Campo requerido', 'Por favor seleccione un tipo de usuario');
+                    $('#userType').focus();
+                    return false;
+                }
+
+                if (password !== confirmPassword) {
+                    showErrorModal('Error de validación', 'Las contraseñas no coinciden');
+                    return false;
+                }
+
+                if (password.length < 8) {
+                    showErrorModal('Contraseña insegura', 'La contraseña debe tener al menos 8 caracteres');
+                    return false;
+                }
+
+                // Mostrar modal de carga
+                showLoadingModal('Creando usuario...');
+
+                // Enviar formulario vía AJAX
+                const formData = new FormData(this);
+
+                fetch($(this).attr('action'), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        // Si hay redirección, asumimos éxito
+                        hideLoadingModal();
+                        $('#userModal').modal('hide');
+                        showSuccessModal('Usuario Creado', 'El usuario se ha creado exitosamente.');
+                        pendingReload = true;
+                    } else if (response.ok) {
+                        hideLoadingModal();
+                        $('#userModal').modal('hide');
+                        showSuccessModal('Usuario Creado', 'El usuario se ha creado exitosamente.');
+                        pendingReload = true;
+                    } else {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                })
+                .catch(error => {
+                    hideLoadingModal();
+                    showErrorModal('Error al crear usuario', 'No se pudo crear el usuario. Intente nuevamente.');
+                    console.error('Error:', error);
+                });
+
+                return false;
+            });
+
+            // === FORMULARIOS DE BLOQUEO/DESBLOQUEO ===
+            $(document).on('submit', 'form[action*="BloquearUsuario"]', function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const isBlocking = form.find('input[name="bloquear"]').val() === 'true';
+                const userName = form.closest('.user-row, .user-card').find('.fw-bold, h6').first().text().trim();
+                const actionText = isBlocking ? 'bloquear' : 'desbloquear';
+
+                showConfirmationModal(actionText, userName, form);
+
+                return false;
+            });
+
+            // === FORMULARIO DE REINICIO DE CONTRASEÑA ===
+            $('#resetPasswordForm').submit(function(e) {
+                e.preventDefault();
+
+                const newPassword = $('#newPassword').val();
+                const confirmPassword = $('#confirmPassword').val();
+
+                if (newPassword !== confirmPassword) {
+                    showErrorModal('Error de validación', 'Las contraseñas no coinciden');
+                    $('#confirmPassword').addClass('is-invalid');
+                    return false;
+                }
+
+                if (newPassword.length < 8) {
+                    showErrorModal('Contraseña insegura', 'La contraseña debe tener al menos 8 caracteres');
+                    return false;
+                }
+
+                showLoadingModal('Reiniciando contraseña...');
+
+                const formData = new FormData(this);
+
+                fetch($(this).attr('action'), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                .then(response => {
+                    if (response.redirected || response.ok) {
+                        hideLoadingModal();
+                        $('#resetPasswordModal').modal('hide');
+                        showSuccessModal('Contraseña Reiniciada', 'La contraseña se ha reiniciado exitosamente.');
+                        pendingReload = true;
+                    } else {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                })
+                .catch(error => {
+                    hideLoadingModal();
+                    showErrorModal('Error al reiniciar contraseña', 'No se pudo reiniciar la contraseña. Intente nuevamente.');
+                    console.error('Error:', error);
+                });
+
+                return false;
+            });
+
+            // === FORMULARIO DE EDICIÓN ===
+            $('#editUserForm').submit(function(e) {
+                e.preventDefault();
+                saveUserChanges();
+            });
+
+            // === BOTÓN DE CONFIRMACIÓN DE ACCIONES ===
+            $('#confirmActionBtn').click(function() {
+                if (pendingForm && pendingAction) {
+                    // Mostrar modal de carga según la acción
+                    let loadingMessage = 'Procesando solicitud...';
+                    if (pendingAction === 'bloquear') loadingMessage = 'Bloqueando usuario...';
+                    if (pendingAction === 'desbloquear') loadingMessage = 'Desbloqueando usuario...';
+
+                    showLoadingModal(loadingMessage);
+                    $('#confirmationModal').modal('hide');
+
+                    const formData = new FormData(pendingForm[0]);
+
+                    fetch(pendingForm.attr('action'), {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                    })
+                    .then(response => {
+                        if (response.redirected || response.ok) {
+                            hideLoadingModal();
+
+                            // DIFERENCIAR ENTRE BLOQUEO Y DESBLOQUEO
+                            if (pendingAction === 'bloquear') {
+                                showSuccessModal('Usuario Bloqueado', 'El usuario ha sido bloqueado correctamente. No podrá acceder al sistema.');
+                            } else if (pendingAction === 'desbloquear') {
+                                showSuccessModal('Usuario Desbloqueado', 'El usuario ha sido desbloqueado correctamente. Ya puede acceder al sistema.');
+                            } else {
+                                showSuccessModal('Operación Exitosa', 'La operación se completó correctamente.');
+                            }
+
+                            pendingReload = true;
+                        } else {
+                            throw new Error('Error en la respuesta del servidor');
+                        }
+                    })
+                    .catch(error => {
+                        hideLoadingModal();
+
+                        // DIFERENCIAR EL MENSAJE DE ERROR TAMBIÉN
+                        const errorMessage = pendingAction === 'bloquear'
+                            ? 'No se pudo bloquear el usuario. Intente nuevamente.'
+                            : 'No se pudo desbloquear el usuario. Intente nuevamente.';
+
+                        showErrorModal('Error en la operación', errorMessage);
+                        console.error('Error:', error);
+                    });
+
+                    // Resetear variables
+                    pendingForm = null;
+                    pendingAction = null;
+                }
+            });
+
+            // Limpiar formulario al cerrar modal de creación
+            $('#userModal').on('hidden.bs.modal', function() {
+                $(this).find('form').trigger('reset');
+                $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                $('#employeeFields').hide();
+                $('#passwordStrength').css('width', '0%');
+                $('#passwordFeedback').text('Seguridad de la contraseña');
+                $('#confirmFeedback').text('Las contraseñas deben coincidir').removeClass('text-success text-danger').addClass('text-muted');
+                $('#submitBtn').prop('disabled', false).html('<i class="bi bi-person-plus me-1"></i>Crear Usuario');
+            });
+
+            // Evento para recargar cuando se cierra el modal de éxito
+            $('#successModal').on('hidden.bs.modal', function() {
+                if (pendingReload) {
+                    window.location.reload();
+                    pendingReload = false;
+                }
+            });
+
+            // Manejar notificaciones del servidor (TempData)
+            const serverMessage = '@TempData["SuccessMessage"]';
+            const serverError = '@TempData["ErrorMessage"]';
+            const serverWarning = '@TempData["WarningMessage"]';
+
+            if (serverMessage) {
+                showSuccessModal('Éxito', serverMessage);
+            }
+
+            if (serverError) {
+                showErrorModal('Error', serverError);
+            }
+
+            if (serverWarning) {
+                showAlert('Advertencia', serverWarning, 'warning', true, 4000);
+            }
+
+            // Verificar parámetros de éxito en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('created') === 'true') {
+                showSuccessModal('Usuario Creado', 'El usuario se ha creado exitosamente.');
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
+            if (urlParams.get('updated') === 'true') {
+                showSuccessModal('Usuario Actualizado', 'Los cambios se han guardado correctamente.');
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
+            if (urlParams.get('blocked') === 'true') {
+                showSuccessModal('Usuario Bloqueado', 'El usuario ha sido bloqueado correctamente.');
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
+            if (urlParams.get('unblocked') === 'true') {
+                showSuccessModal('Usuario Desbloqueado', 'El usuario ha sido desbloqueado correctamente.');
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
+            if (urlParams.get('passwordReset') === 'true') {
+                showSuccessModal('Contraseña Reiniciada', 'La contraseña se ha reiniciado exitosamente.');
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
+            // Inicializar filtros y ordenamiento
+            applyFilters();
+            applySorting();
+        });
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = true) {
+            // Configurar como éxito
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function showErrorModal(title, message, autoClose = true) {
+            // Configurar como error
+            $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-danger bi-exclamation-triangle-fill');
+            $('#successModalButton').removeClass('btn-success btn-warning').addClass('btn-danger');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 4000);
+            }
+        }
+
+        function showWarningModal(title, message, autoClose = true) {
+            // Configurar como advertencia
+            $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-danger bi-exclamation-triangle-fill')
+                                 .addClass('text-warning bi-exclamation-triangle-fill');
+            $('#successModalButton').removeClass('btn-success btn-danger').addClass('btn-warning');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3500);
+            }
+        }
+
+        function showConfirmationModal(action, userName, form) {
+            const messages = {
+                bloquear: {
+                    title: 'Bloquear Usuario',
+                    message: `¿Está seguro que desea BLOQUEAR al usuario "${userName}"?`,
+                    details: '⚠️ El usuario NO podrá acceder al sistema hasta que sea desbloqueado.',
+                    buttonText: 'Sí, Bloquear Usuario',
+                    buttonClass: 'btn-danger'
+                },
+                desbloquear: {
+                    title: 'Desbloquear Usuario',
+                    message: `¿Está seguro que desea DESBLOQUEAR al usuario "${userName}"?`,
+                    details: '✅ El usuario podrá acceder al sistema nuevamente.',
+                    buttonText: 'Sí, Desbloquear Usuario',
+                    buttonClass: 'btn-success'
+                }
+            };
+
+            const config = messages[action] || {
+                title: 'Confirmar Acción',
+                message: `¿Está seguro que desea realizar esta acción para "${userName}"?`,
+                details: 'Esta acción puede afectar el acceso del usuario al sistema.',
+                buttonText: 'Confirmar',
+                buttonClass: 'btn-warning'
+            };
+
+            $('#confirmationModalLabel').text(config.title);
+            $('#confirmationModalMessage').text(config.message);
+            $('#confirmationModalDetails').text(config.details);
+
+            // Configurar el botón según la acción
+            const confirmBtn = $('#confirmActionBtn');
+            confirmBtn.removeClass('btn-danger btn-success btn-warning')
+                      .addClass(config.buttonClass)
+                      .html(`<i class="bi bi-check-circle me-2"></i>${config.buttonText}`);
+
+            // Guardar referencia al formulario y acción
+            pendingAction = action;
+            pendingForm = form;
+
+            $('#confirmationModal').modal('show');
+        }
+
+        // === FUNCIONES AUXILIARES ===
+
+        function initializeUniqueUsers() {
+            $('.user-row, .user-card').each(function() {
+                const userId = $(this).data('user-id');
+                if (userId) {
+                    uniqueUserIds.add(userId);
+                }
+            });
+        }
+
+        function contarUsuariosUnicosVisibles() {
+            const visibleIds = new Set();
+            $('.user-row:visible, .user-card:visible').each(function() {
+                const userId = $(this).data('user-id');
+                if (userId) {
+                    visibleIds.add(userId);
+                }
+            });
+            return visibleIds.size;
+        }
+
+        function applyFilters() {
+            const searchText = $('#searchInput').val().toLowerCase();
+            const statusFilter = $('.filter-btn[data-filter="status"].active').data('value');
+            const roleFilter = $('.filter-btn[data-filter="role"].active').data('value');
+            const recentFilter = $('.filter-btn[data-filter="recent"].active').data('value');
+
+            let hasVisibleItems = false;
+
+            $('.user-row, .user-card').each(function() {
+                const rowText = $(this).text().toLowerCase();
+                const status = $(this).data('status');
+                const roles = $(this).data('roles');
+                const recent = $(this).data('recent');
+
+                const matchesSearch = searchText === '' || rowText.includes(searchText);
+                const matchesStatus = statusFilter === 'all' || status === statusFilter;
+                const matchesRole = roleFilter === 'all' || roles.includes(roleFilter);
+                const matchesRecent = recentFilter === 'all' || recent === recentFilter;
+
+                const isVisible = matchesSearch && matchesStatus && matchesRole && matchesRecent;
+                $(this).toggle(isVisible);
+
+                if (isVisible) hasVisibleItems = true;
+            });
+
+            const visibleCount = contarUsuariosUnicosVisibles();
+            const totalCount = uniqueUserIds.size;
+
+            $('#userCount').text(visibleCount);
+            $('#filteredCount').text(visibleCount);
+            $('#totalCount').text(totalCount);
+
+            if (visibleCount === 0) {
+                if ($('#noResultsMessage').length === 0) {
+                    $('.table-responsive, #usersCardView').append(`
+                        <div class="text-center py-5" id="noResultsMessage">
+                            <i class="bi bi-search display-4 text-muted"></i>
+                            <p class="mt-3 text-muted">No se encontraron usuarios con los filtros aplicados</p>
+                            <button class="btn btn-outline-primary" onclick="clearAllFilters()">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Limpiar filtros
+                            </button>
+                        </div>
+                    `);
+                }
+            } else {
+                $('#noResultsMessage').remove();
+            }
+
+            if (hasVisibleItems) {
+                applySorting();
+            }
+        }
+
+        // === FUNCIÓN DE ORDENAMIENTO CORREGIDA ===
+        function applySorting() {
+            const $tableRows = $('.user-row').get();
+            $tableRows.sort(sortFunction);
+            $('#usersTableView').append($tableRows);
+
+            const $cardRows = $('.user-card').get();
+            $cardRows.sort(sortFunction);
+            $('#usersCardView').append($cardRows);
+        }
+
+        function sortFunction(a, b) {
+            const $a = $(a);
+            const $b = $(b);
+
+            if (currentSort === 'name') {
+                const nameA = $a.data('name') || '';
+                const nameB = $b.data('name') || '';
+
+                if (sortDirection === 'asc') {
+                    return nameA.localeCompare(nameB);
+                } else {
+                    return nameB.localeCompare(nameA);
+                }
+            } else {
+                // CORRECCIÓN: Convertir a número y comparar correctamente
+                const dateA = parseInt($a.data('date')) || 0;
+                const dateB = parseInt($b.data('date')) || 0;
+
+                if (sortDirection === 'asc') {
+                    return dateA - dateB; // Más antiguos primero
+                } else {
+                    return dateB - dateA; // Más recientes primero
+                }
+            }
+        }
+
+        function validatePasswordMatch() {
+            const newPassword = $('#newPassword').val();
+            const confirmPassword = $('#confirmPassword').val();
+
+            if (confirmPassword && newPassword !== confirmPassword) {
+                $('#confirmPassword').addClass('is-invalid');
+            } else {
+                $('#confirmPassword').removeClass('is-invalid');
+            }
+        }
+
+        function validateCreatePasswordMatch() {
+            const password = $('#password').val();
+            const confirmPassword = $('#confirmPasswordCreate').val();
+
+            if (confirmPassword && password !== confirmPassword) {
+                $('#confirmPasswordCreate').addClass('is-invalid');
+            } else {
+                $('#confirmPasswordCreate').removeClass('is-invalid');
+            }
+        }
+
+        // === FUNCIONES PARA DETALLES Y EDICIÓN ===
+
+        async function showUserDetails(userId) {
+            console.log('Mostrando detalles para usuario ID:', userId);
+            try {
+                $('#userDetailsContent').html(`
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando información del usuario...</p>
+                    </div>
+                `);
+                $('#userDetailsModal').modal('show');
+
+                const response = await fetch(`/Admin/DetallesUsuario?id=${userId}`);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
+                const result = await response.json();
+                if (result.success) {
+                    const usuario = result.data;
+                    let rolesHtml = '';
+                    if (usuario.roles && usuario.roles.length > 0) {
+                        usuario.roles.forEach(role => {
+                            rolesHtml += `<span class="badge ${getRoleBadge(role)} me-1 mb-1">${role}</span>`;
+                        });
+                    } else {
+                        rolesHtml = '<span class="badge bg-secondary">Sin roles asignados</span>';
+                    }
+
+                    const fechaCreacion = new Date(usuario.fechaCreacion);
+                    const fechaFormateada = fechaCreacion.toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    let ultimoAccesoHtml = '';
+                    if (usuario.ultimoAcceso) {
+                        const ultimoAcceso = new Date(usuario.ultimoAcceso);
+                        ultimoAccesoHtml = `
+                            <div class="col-md-6 mb-2">
+                                <strong>Último Acceso:</strong><br>
+                                <span>${ultimoAcceso.toLocaleDateString('es-ES')} ${ultimoAcceso.toLocaleTimeString('es-ES')}</span>
+                            </div>
+                        `;
+                    }
+
+                    const fotoPerfilHtml = usuario.fotoPerfil
+                        ? `<img src="${usuario.fotoPerfil}?v=${new Date().getTime()}"
+                                 class="rounded-circle shadow"
+                                 alt="Foto de perfil"
+                                 style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #dee2e6;">`
+                        : `<div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3 shadow"
+                                 style="width: 120px; height: 120px; border: 3px solid #dee2e6;">
+                              <i class="bi bi-person-fill display-4 text-primary"></i>
+                           </div>`;
+
+                    $('#userDetailsContent').html(`
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-4">
+                                ${fotoPerfilHtml}
+                                <h4 class="mb-1 mt-3">${usuario.nombreCompleto || 'Sin nombre'}</h4>
+                                <p class="text-muted mb-2">ID: ${usuario.id}</p>
+                                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                    ${rolesHtml}
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <h6 class="border-bottom pb-2">
+                                            <i class="bi bi-info-circle me-2"></i>Información Básica
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Email:</strong><br>
+                                                <span class="text-primary">${usuario.email || 'Sin email'}</span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Teléfono:</strong><br>
+                                                <span>${usuario.telefono || 'No especificado'}</span>
+                                            </div>
+                                            <div class="col-12 mb-2">
+                                                <strong>Especialidad:</strong><br>
+                                                <span>${usuario.especialidad || 'No especificada'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-3">
+                                        <h6 class="border-bottom pb-2">
+                                            <i class="bi bi-shield-check me-2"></i>Estado de la Cuenta
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Cuenta Bloqueada:</strong><br>
+                                                <span class="badge ${usuario.bloqueado ? 'bg-danger' : 'bg-success'}">
+                                                    ${usuario.bloqueado ? 'Sí' : 'No'}
+                                                </span>
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Es Técnico:</strong><br>
+                                                <span class="badge ${usuario.esTecnico ? 'bg-primary' : 'bg-secondary'}">
+                                                    ${usuario.esTecnico ? 'Sí' : 'No'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <h6 class="border-bottom pb-2">
+                                            <i class="bi bi-clock-history me-2"></i>Información de Registro
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <strong>Fecha de Creación:</strong><br>
+                                                <span>${fechaFormateada}</span>
+                                            </div>
+                                            ${ultimoAccesoHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+
+                    $('#editFromDetailsBtn').show().off('click').on('click', function() {
+                        navigateToEditFromDetails(userId);
+                    });
+
+                } else {
+                    $('#userDetailsContent').html(`
+                        <div class="alert alert-danger text-center">
+                            <i class="bi bi-exclamation-triangle display-4"></i>
+                            <p class="mt-2">${result.message || 'Error al cargar los detalles del usuario'}</p>
+                        </div>
+                    `);
+                    $('#editFromDetailsBtn').hide();
+                }
+            } catch (error) {
+                console.error('Error al cargar detalles:', error);
+                $('#userDetailsContent').html(`
+                    <div class="alert alert-danger text-center">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <p class="mt-2">Error al cargar los detalles del usuario: ${error.message}</p>
+                        <small>Verifique la consola para más detalles</small>
+                    </div>
+                `);
+                $('#editFromDetailsBtn').hide();
+            }
+        }
+
+        function navigateToEditFromDetails(userId) {
+            $('#userDetailsModal').modal('hide');
+            setTimeout(() => {
+                showEditUserModal(userId);
+            }, 500);
+        }
+
+        async function showEditUserModal(userId) {
+            try {
+                $('#editUserContent').html(`
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando información del usuario...</p>
+                    </div>
+                `);
+
+                const response = await fetch(`/Admin/ObtenerUsuarioParaEditar?id=${userId}`);
+                if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
+                const result = await response.json();
+                if (result.success) {
+                    const usuario = result.data;
+                    console.log('Datos para edición:', usuario);
+
+                    // Determinar el rol principal
+                    let rolPrincipal = 'Empleado';
+                    if (usuario.roles && usuario.roles.length > 0) {
+                        if (usuario.roles.includes('Admin')) {
+                            rolPrincipal = 'Admin';
+                        } else if (usuario.roles.includes('Tecnico')) {
+                            rolPrincipal = 'Tecnico';
+                        }
+                    }
+
+                    $('#editUserContent').html(`
+                        <input type="hidden" name="Id" value="${usuario.id}">
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNombreCompleto" class="form-label fw-bold">Nombre Completo *</label>
+                                    <input type="text" class="form-control" id="editNombreCompleto" name="NombreCompleto"
+                                           value="${usuario.nombreCompleto || ''}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editEmail" class="form-label fw-bold">Correo Electrónico *</label>
+                                    <input type="email" class="form-control" id="editEmail" name="Email"
+                                           value="${usuario.email || ''}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editTelefono" class="form-label">Teléfono</label>
+                                    <input type="tel" class="form-control" id="editTelefono" name="Telefono"
+                                           value="${usuario.telefono || ''}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editEspecialidad" class="form-label">Especialidad</label>
+                                    <input type="text" class="form-control" id="editEspecialidad" name="Especialidad"
+                                           value="${usuario.especialidad || ''}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Rol Principal *</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input role-radio" type="radio" name="rolPrincipal"
+                                               value="Empleado" id="rolEmpleado" ${rolPrincipal === 'Empleado' ? 'checked' : ''}>
+                                        <label class="form-check-label" for="rolEmpleado">
+                                            <span class="badge bg-info">👨‍💼 Empleado</span>
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Acceso básico al sistema</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input role-radio" type="radio" name="rolPrincipal"
+                                               value="Tecnico" id="rolTecnico" ${rolPrincipal === 'Tecnico' ? 'checked' : ''}>
+                                        <label class="form-check-label" for="rolTecnico">
+                                            <span class="badge bg-primary">🔧 Técnico</span>
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Puede resolver tickets</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input role-radio" type="radio" name="rolPrincipal"
+                                               value="Admin" id="rolAdmin" ${rolPrincipal === 'Admin' ? 'checked' : ''}>
+                                        <label class="form-check-label" for="rolAdmin">
+                                            <span class="badge bg-danger">⚙️ Administrador</span>
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Acceso completo al sistema</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editEsTecnico" name="EsTecnico"
+                                       ${usuario.esTecnico ? 'checked' : ''}>
+                                <label class="form-check-label" for="editEsTecnico">
+                                    Es Técnico
+                                </label>
+                            </div>
+                        </div>
+                    `);
+
+                    // Configurar eventos para los radios
+                    $('.role-radio').change(function() {
+                        const rolSeleccionado = $(this).val();
+                        const esTecnicoCheckbox = $('#editEsTecnico');
+
+                        if (rolSeleccionado === 'Admin' || rolSeleccionado === 'Tecnico') {
+                            esTecnicoCheckbox.prop('checked', true);
+                        } else {
+                            esTecnicoCheckbox.prop('checked', false);
+                        }
+                    });
+
+                } else {
+                    $('#editUserContent').html(`
+                        <div class="alert alert-danger text-center">
+                            <i class="bi bi-exclamation-triangle display-4"></i>
+                            <p class="mt-2">${result.message || 'Error al cargar la información del usuario'}</p>
+                        </div>
+                    `);
+                }
+            } catch (error) {
+                console.error('Error al cargar usuario para editar:', error);
+                $('#editUserContent').html(`
+                    <div class="alert alert-danger text-center">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <p class="mt-2">Error al cargar la información del usuario: ${error.message}</p>
+                    </div>
+                `);
+            }
+
+            $('#editUserModal').modal('show');
+        }
+
+        async function saveUserChanges() {
+            const saveButton = $('#saveUserButton');
+            const originalText = saveButton.html();
+
+            try {
+                saveButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Guardando...');
+
+                // Obtener datos del formulario
+                const rolPrincipal = $('input[name="rolPrincipal"]:checked').val();
+                if (!rolPrincipal) {
+                    showErrorModal('Error de validación', 'Debe seleccionar un rol principal');
+                    saveButton.prop('disabled', false).html(originalText);
+                    return;
+                }
+
+                // Determinar roles finales
+                const rolesFinales = [rolPrincipal];
+                if (rolPrincipal === 'Admin') {
+                    rolesFinales.push('Tecnico');
+                }
+
+                const esTecnico = $('#editEsTecnico').is(':checked') || rolPrincipal === 'Admin' || rolPrincipal === 'Tecnico';
+
+                const formData = {
+                    Id: $('input[name="Id"]').val(),
+                    NombreCompleto: $('#editNombreCompleto').val(),
+                    Email: $('#editEmail').val(),
+                    Telefono: $('#editTelefono').val(),
+                    Especialidad: $('#editEspecialidad').val(),
+                    EsTecnico: esTecnico,
+                    Roles: [...new Set(rolesFinales)]
+                };
+
+                console.log('Enviando datos:', formData);
+
+                const response = await fetch('/Admin/EditarUsuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    $('#editUserModal').modal('hide');
+                    showSuccessModal('Usuario Actualizado', 'Los cambios se guardaron correctamente');
+                    pendingReload = true;
+                } else {
+                    showErrorModal('Error al guardar', result.message || 'Error al actualizar el usuario');
+                    saveButton.prop('disabled', false).html(originalText);
+                }
+            } catch (error) {
+                console.error('Error al guardar cambios:', error);
+                showErrorModal('Error de conexión', 'Error al guardar los cambios: ' + error.message);
+                saveButton.prop('disabled', false).html(originalText);
+            }
+        }
+
+        function getRoleBadge(role) {
+            switch(role.toLowerCase()) {
+                case 'admin': return 'bg-danger';
+                case 'tecnico': return 'bg-primary';
+                case 'empleado': return 'bg-info';
+                default: return 'bg-secondary';
+            }
+        }
+
+        // Función para confirmar acciones críticas
+        function confirmarAccion(accion, nombreUsuario) {
+            const form = event.target.closest('form');
+            showConfirmationModal(accion, nombreUsuario, $(form));
+            return false; // Prevenir envío inmediato del formulario
+        }
+
+        function showResetPasswordModal(userId, userName) {
+            $('#resetUserId').val(userId);
+            $('#resetUserInfo').text(`Reiniciar contraseña para: ${userName}`);
+            $('#newPassword').val('');
+            $('#confirmPassword').val('');
+            $('#confirmPassword').removeClass('is-invalid');
+            $('#resetPasswordModal').modal('show');
+        }
+
+        function clearAllFilters() {
+            $('#searchInput').val('');
+            $('.filter-btn').removeClass('active');
+            $('.filter-btn[data-value="all"]').addClass('active');
+            $('.user-row, .user-card').show();
+
+            const totalCount = uniqueUserIds.size;
+            $('#userCount').text(totalCount);
+            $('#filteredCount').text(totalCount);
+            $('#totalCount').text(totalCount);
+            $('#noResultsMessage').remove();
+
+            applySorting();
+        }
+
+        // Función auxiliar para mostrar alertas (compatibilidad)
+        function showAlert(title, message, type = 'info', autoClose = true, duration = 3000) {
+            switch(type) {
+                case 'error':
+                    showErrorModal(title, message, autoClose);
+                    break;
+                case 'warning':
+                    showWarningModal(title, message, autoClose);
+                    break;
+                case 'success':
+                    showSuccessModal(title, message, autoClose);
+                    break;
+                default:
+                    showSuccessModal(title, message, autoClose);
+            }
+        }
+    </script>
+
+    <style>
+        .spin {
+            animation: spinAnimation 0.5s linear infinite;
+        }
+
+        @@keyframes spinAnimation {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .user-card {
+            transition: all 0.3s ease;
+        }
+
+        .user-row {
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            font-weight: 600;
+        }
+
+        .avatar-sm {
+            width: 40px;
+            height: 40px;
+        }
+
+        .avatar-xl {
+            width: 80px;
+            height: 80px;
+        }
+
+        .password-strength .progress {
+            background-color: #e9ecef;
+        }
+
+        .toggle-password {
+            border-left: 0;
+        }
+
+        [data-bs-theme="dark"] .tooltip .tooltip-inner {
+            background-color: #1a1d23 !important;
+            color: #ffffff !important;
+            border: 1px solid #30363d;
+        }
+
+        [data-bs-theme="dark"] .tooltip .tooltip-arrow::before {
+            border-top-color: #1a1d23 !important;
+        }
+
+        /* Estilos para los modales de éxito y confirmación */
+        #successModal .modal-content,
+        #confirmationModal .modal-content,
+        #loadingModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        #confirmationModal .modal-body {
+            padding: 2rem;
+        }
+
+        /* Estilos para el modal de carga */
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        /* Estilos para modales en modo oscuro */
+        [data-bs-theme="dark"] #loadingModal .modal-content {
+            background: rgba(33, 37, 41, 0.95);
+        }
+
+        [data-bs-theme="dark"] #successModal .modal-content {
+            background: #1a1d23;
+            border: 1px solid #30363d;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+}
+
+@functions {
+    string GetRoleBadge(string role)
+    {
+        return role?.ToLower() switch
+        {
+            "admin" => "bg-danger",
+            "tecnico" => "bg-primary",
+            "empleado" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    bool EsUsuarioReciente(DateTime fechaCreacion)
+    {
+        return (DateTime.UtcNow - fechaCreacion).TotalDays <= 7;
+    }
+
+    string GetTiempoTranscurrido(DateTime fechaCreacion)
+    {
+        var tiempo = DateTime.UtcNow - fechaCreacion;
+
+        if (tiempo.TotalDays >= 365)
+        {
+            var años = (int)(tiempo.TotalDays / 365);
+            return $"Hace {años} año{(años > 1 ? "s" : "")}";
+        }
+        else if (tiempo.TotalDays >= 30)
+        {
+            var meses = (int)(tiempo.TotalDays / 30);
+            return $"Hace {meses} mes{(meses > 1 ? "es" : "")}";
+        }
+        else if (tiempo.TotalDays >= 1)
+        {
+            var dias = (int)tiempo.TotalDays;
+            return $"Hace {dias} día{(dias > 1 ? "s" : "")}";
+        }
+        else if (tiempo.TotalHours >= 1)
+        {
+            var horas = (int)tiempo.TotalHours;
+            return $"Hace {horas} hora{(horas > 1 ? "s" : "")}";
+        }
+        else
+        {
+            var minutos = (int)tiempo.TotalMinutes;
+            if (minutos < 1) return "Hace unos segundos";
+            return $"Hace {minutos} minuto{(minutos > 1 ? "s" : "")}";
+        }
+    }
+}

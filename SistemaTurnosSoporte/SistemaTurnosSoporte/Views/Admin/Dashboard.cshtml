@@ -1,0 +1,1191 @@
+﻿@model SistemaSoporte.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Panel de Control - Administración";
+}
+
+<div class="container-fluid">
+    <!-- Header Mejorado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>Panel de Control</h2>
+            <p class="text-muted mb-0">Resumen general del sistema y métricas clave</p>
+            @if (Model.FechaInicio.HasValue && Model.FechaFin.HasValue)
+            {
+                <small class="text-muted">
+                    <i class="bi bi-calendar-range me-1"></i>
+                    Período: @Model.FechaInicio.Value.ToString("dd/MM/yyyy") - @Model.FechaFin.Value.ToString("dd/MM/yyyy")
+                </small>
+            }
+        </div>
+
+        <!-- Botón de Reportes Mejorado - CORREGIDO -->
+        <div class="dropdown">
+            <button class="btn btn-success px-3 py-2 dropdown-toggle d-flex align-items-center" type="button" id="reportesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-download me-2"></i>
+                <span>Generar Reportes</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="reportesDropdown">
+                <li><h6 class="dropdown-header text-primary">📊 Reportes de Tickets</h6></li>
+                <li>
+                    <form method="post" action="/Admin/ExportarReporteSimple" class="d-inline w-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportType" value="Tickets">
+                        <input type="hidden" name="format" value="Excel">
+                        <button type="submit" class="dropdown-item d-flex align-items-center border-0 bg-transparent w-100">
+                            <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                            <div>
+                                <div>Exportar a Excel</div>
+                                <small class="text-muted">Datos completos en formato tabla</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form method="post" action="/Admin/ExportarReporteSimple" class="d-inline w-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportType" value="Tickets">
+                        <input type="hidden" name="format" value="PDF">
+                        <button type="submit" class="dropdown-item d-flex align-items-center border-0 bg-transparent w-100">
+                            <i class="bi bi-file-pdf text-danger me-2"></i>
+                            <div>
+                                <div>Exportar a PDF</div>
+                                <small class="text-muted">Reporte formal para impresión</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header text-primary">💻 Reportes de Equipos</h6></li>
+                <li>
+                    <form method="post" action="/Admin/ExportarReporteSimple" class="d-inline w-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportType" value="Equipos">
+                        <input type="hidden" name="format" value="Excel">
+                        <button type="submit" class="dropdown-item d-flex align-items-center border-0 bg-transparent w-100">
+                            <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                            <div>
+                                <div>Inventario de Equipos</div>
+                                <small class="text-muted">Lista completa con estados</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form method="post" action="/Admin/ExportarReporteSimple" class="d-inline w-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportType" value="Equipos">
+                        <input type="hidden" name="format" value="PDF">
+                        <button type="submit" class="dropdown-item d-flex align-items-center border-0 bg-transparent w-100">
+                            <i class="bi bi-file-pdf text-danger me-2"></i>
+                            <div>
+                                <div>Reporte PDF de Equipos</div>
+                                <small class="text-muted">Reporte formal del inventario</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+
+                <!-- NUEVA SECCIÓN: Reportes de Inventario General -->
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header text-primary">📦 Reportes de Inventario</h6></li>
+                <li>
+                    <form method="post" action="/Admin/ExportarReporteSimple" class="d-inline w-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportType" value="Inventario">
+                        <input type="hidden" name="format" value="Excel">
+                        <button type="submit" class="dropdown-item d-flex align-items-center border-0 bg-transparent w-100">
+                            <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                            <div>
+                                <div>Inventario General - Excel</div>
+                                <small class="text-muted">Artículos y suministros en stock</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+                <li>
+                    <form method="post" action="/Admin/ExportarReporteSimple" class="d-inline w-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reportType" value="Inventario">
+                        <input type="hidden" name="format" value="PDF">
+                        <button type="submit" class="dropdown-item d-flex align-items-center border-0 bg-transparent w-100">
+                            <i class="bi bi-file-pdf text-danger me-2"></i>
+                            <div>
+                                <div>Inventario General - PDF</div>
+                                <small class="text-muted">Reporte formal de inventario</small>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+            <div>@TempData["ErrorMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+            <div>@TempData["SuccessMessage"]</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Filtros de Fechas para Gráficas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title mb-3"><i class="bi bi-calendar-range me-2 text-primary"></i>Filtrar Gráficas por Fecha</h6>
+                    <form id="filtrosForm" asp-controller="Admin" asp-action="AplicarFiltrosDashboard" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row align-items-end">
+                            <div class="col-md-3 mb-2">
+                                <label for="fechaInicio" class="form-label small fw-medium">Fecha de Inicio</label>
+                                <input type="date" class="form-control form-control-sm" id="fechaInicio" name="FechaInicio"
+                                       value="@(Model.FechaInicio?.ToString("yyyy-MM-dd") ?? DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd"))">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label for="fechaFin" class="form-label small fw-medium">Fecha de Fin</label>
+                                <input type="date" class="form-control form-control-sm" id="fechaFin" name="FechaFin"
+                                       value="@(Model.FechaFin?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))">
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small fw-medium">Rangos Predefinidos</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="Periodo" id="periodo7dias" value="7dias"
+                                           @(Model.PeriodoSeleccionado == "7dias" ? "checked" : "")>
+                                    <label class="btn btn-outline-primary btn-sm" for="periodo7dias">7 días</label>
+
+                                    <input type="radio" class="btn-check" name="Periodo" id="periodo30dias" value="30dias"
+                                           @(Model.PeriodoSeleccionado == "30dias" ? "checked" : "")>
+                                    <label class="btn btn-outline-primary btn-sm" for="periodo30dias">30 días</label>
+
+                                    <input type="radio" class="btn-check" name="Periodo" id="periodo90dias" value="90dias"
+                                           @(Model.PeriodoSeleccionado == "90dias" ? "checked" : "")>
+                                    <label class="btn btn-outline-primary btn-sm" for="periodo90dias">90 días</label>
+
+                                    <input type="radio" class="btn-check" name="Periodo" id="periodoPersonalizado" value="personalizado"
+                                           @(Model.PeriodoSeleccionado == "personalizado" ? "checked" : "")>
+                                    <label class="btn btn-outline-primary btn-sm" for="periodoPersonalizado">Personalizado</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100" id="aplicarFiltro">
+                                    <i class="bi bi-filter me-1"></i>Aplicar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas con Filtros de Fecha -->
+    <div class="row mb-4">
+        <!-- Distribución de Problemas -->
+        <div class="col-xl-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>Distribución por Tipo de Problema</h6>
+                    <div>
+                        <span class="badge bg-primary" id="totalProblemas">@Model.SolicitudesPorTipo.Values.Sum() total</span>
+                        <small class="text-muted ms-2" id="rangoFechasProblemas">
+                            @(Model.FechaInicio?.ToString("dd/MM/yy") ?? "") - @(Model.FechaFin?.ToString("dd/MM/yy") ?? "")
+                        </small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.SolicitudesPorTipo.Any())
+                    {
+                        <canvas id="problemasChart" height="250"></canvas>
+                        <div class="text-center mt-3" id="loadingProblemas" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <small class="text-muted ms-2">Actualizando gráfica...</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-bar-chart display-4 opacity-50"></i>
+                            <p class="mt-3">No hay datos disponibles para mostrar</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendimiento por Técnico -->
+        <div class="col-xl-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2 text-success"></i>Rendimiento por Técnico</h6>
+                    <small class="text-muted" id="rangoFechasTecnicos">
+                        @(Model.FechaInicio?.ToString("dd/MM/yy") ?? "") - @(Model.FechaFin?.ToString("dd/MM/yy") ?? "")
+                    </small>
+                </div>
+                <div class="card-body">
+                    @if (Model.SolicitudesPorTecnico.Any())
+                    {
+                        <canvas id="tecnicosChart" height="250"></canvas>
+                        <div class="text-center mt-3" id="loadingTecnicos" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <small class="text-muted ms-2">Actualizando gráfica...</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-people display-4 opacity-50"></i>
+                            <p class="mt-3">No hay asignaciones de tickets</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas Inferiores -->
+    <div class="row">
+        <!-- Tickets Urgentes -->
+        <div class="col-xl-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Tickets Urgentes Pendientes</h6>
+                    <span class="badge bg-danger">@Model.SolicitudesUrgentes.Count</span>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.SolicitudesUrgentes.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var solicitud in Model.SolicitudesUrgentes)
+                            {
+                                <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@solicitud.Id"
+                                   class="list-group-item list-group-item-action border-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <h6 class="mb-0 me-2">Ticket #@solicitud.Id</h6>
+                                                <span class="badge bg-danger small">Alta Prioridad</span>
+                                            </div>
+                                            <p class="mb-1 text-dark fw-medium">@solicitud.Titulo</p>
+                                            <small class="text-muted">
+                                                <i class="bi bi-person me-1"></i>@solicitud.UsuarioNombre
+                                                @if (!string.IsNullOrEmpty(solicitud.Departamento) && solicitud.Departamento != "N/A")
+                                                {
+                                                    <span class="ms-2"><i class="bi bi-building me-1"></i>@solicitud.Departamento</span>
+                                                }
+                                            </small>
+                                        </div>
+                                        <i class="bi bi-chevron-right text-muted"></i>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-check-circle display-4 text-success opacity-50"></i>
+                            <p class="mt-3">¡Excelente! No hay tickets urgentes pendientes</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas Mejoradas - Más Compactas -->
+        <div class="col-xl-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-lightning me-2 text-warning"></i>Acciones Rápidas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-sm d-flex align-items-center justify-content-start py-2"
+                                data-bs-toggle="modal" data-bs-target="#userModal">
+                            <i class="bi bi-person-plus me-2 fs-6"></i>
+                            <span>Crear Usuario</span>
+                        </button>
+
+                        <a asp-controller="Admin" asp-action="GestionUsuarios"
+                           class="btn btn-info btn-sm d-flex align-items-center justify-content-start py-2 text-white">
+                            <i class="bi bi-people me-2 fs-6"></i>
+                            <span>Gestionar Usuarios</span>
+                        </a>
+
+                        <a asp-action="Tickets"
+                           class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-start py-2">
+                            <i class="bi bi-list-task me-2 fs-6"></i>
+                            <span>Ver Todos los Tickets</span>
+                        </a>
+
+                        <a asp-controller="Admin" asp-action="Equipos"
+                           class="btn btn-outline-success btn-sm d-flex align-items-center justify-content-start py-2">
+                            <i class="bi bi-pc-display-horizontal me-2 fs-6"></i>
+                            <span>Inventario de Equipos</span>
+                        </a>
+
+                        <!-- NUEVO BOTÓN: Inventario General -->
+                        <a asp-controller="Admin" asp-action="Inventario"
+                           class="btn btn-outline-info btn-sm d-flex align-items-center justify-content-start py-2">
+                            <i class="bi bi-box-seam me-2 fs-6"></i>
+                            <span>Inventario General</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Mejorado para Crear Usuarios -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="userModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>Crear Nuevo Usuario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="userForm" asp-controller="Admin" asp-action="CreateUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nombreCompleto" class="form-label fw-medium">Nombre Completo *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" id="nombreCompleto" name="nombreCompleto"
+                                           placeholder="Ej: Juan Pérez García" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-medium">Correo Electrónico *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="email" name="email"
+                                           placeholder="ejemplo@empresa.com" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userType" class="form-label fw-medium">Tipo de Usuario *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                    <select class="form-select" id="userType" name="userType" required>
+                                        <option value="">Seleccionar tipo de usuario...</option>
+                                        <option value="Usuario">👨‍💼 Usuario (Empleado)</option>
+                                        <option value="Tecnico">🔧 Técnico de Soporte</option>
+                                        <option value="Admin">⚙️ Administrador del Sistema</option>
+                                    </select>
+                                </div>
+                                <div class="form-text">Define los permisos y acceso del usuario</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label fw-medium">Contraseña *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password"
+                                           placeholder="Mínimo 8 caracteres" required minlength="8">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password"
+                                            data-target="password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength mt-1">
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar" id="passwordStrength" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="passwordFeedback">Seguridad de la contraseña</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label fw-medium">Confirmar Contraseña *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                                           placeholder="Repetir contraseña" required>
+                                    <button type="button" class="btn btn-outline-secondary toggle-password"
+                                            data-target="confirmPassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text" id="confirmFeedback">Las contraseñas deben coincidir</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos para Empleados -->
+                    <div id="employeeFields" style="display: none;">
+                        <hr>
+                        <h6 class="text-primary mb-3"><i class="bi bi-building me-2"></i>Información del Empleado</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telefono" class="form-label">Teléfono de Contacto</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        <input type="tel" class="form-control" id="telefono" name="telefono"
+                                               placeholder="Ej: +1 234 567 8900">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label">Departamento</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-diagram-3"></i></span>
+                                        <input type="text" class="form-control" id="departamento" name="departamento"
+                                               placeholder="Ej: Recursos Humanos">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="posicion" class="form-label">Posición/Cargo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                        <input type="text" class="form-control" id="posicion" name="posicion"
+                                               placeholder="Ej: Analista Senior">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-person-plus me-1"></i>Crear Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Acciones Críticas -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirmar Acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning display-4"></i>
+                </div>
+                <h6 id="confirmationModalMessage" class="mb-3">¿Está seguro de realizar esta acción?</h6>
+                <p id="confirmationModalDetails" class="text-muted small"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" id="confirmActionBtn">
+                    <i class="bi bi-check-circle me-2"></i>Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .hover-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .hover-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+            }
+
+        .avatar-lg {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-strength .progress {
+            background-color: #e9ecef;
+        }
+
+        .toggle-password {
+            border-left: 0;
+        }
+
+        .form-text {
+            font-size: 0.8rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Estilos para los filtros de fecha */
+        .btn-group .btn {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.5rem;
+        }
+
+        .form-control-sm {
+            font-size: 0.875rem;
+        }
+
+        .btn-check:checked + .btn-outline-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+
+        /* Mejoras de espaciado */
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        .list-group-item {
+            padding: 0.75rem 1.25rem;
+        }
+
+        /* Estilos para los modales de notificación */
+        #successModal .modal-content,
+        #confirmationModal .modal-content,
+        #loadingModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        #confirmationModal .modal-body {
+            padding: 2rem;
+        }
+
+        /* Estilos para el modal de carga */
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        /* Estilos para modales en modo oscuro */
+        [data-bs-theme="dark"] #loadingModal .modal-content {
+            background: rgba(33, 37, 41, 0.95);
+        }
+
+        [data-bs-theme="dark"] #successModal .modal-content {
+            background: #1a1d23;
+            border: 1px solid #30363d;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+}
+
+@section Scripts {
+    @if (Model.SolicitudesPorTipo.Any() || Model.SolicitudesPorTecnico.Any())
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Variables globales para las gráficas
+            let problemasChart = null;
+            let tecnicosChart = null;
+
+            // Función para inicializar las gráficas
+            function inicializarGraficas() {
+                // Gráfico de tipos de problemas
+                @if (Model.SolicitudesPorTipo.Any())
+                {
+                        <text>
+                        const ctx1 = document.getElementById('problemasChart').getContext('2d');
+                        problemasChart = new Chart(ctx1, {
+                            type: 'doughnut',
+                            data: {
+                                labels: @Html.Raw(Json.Serialize(Model.SolicitudesPorTipo.Keys)),
+                                datasets: [{
+                                    data: @Html.Raw(Json.Serialize(Model.SolicitudesPorTipo.Values)),
+                                    backgroundColor: [
+                                        'rgba(13, 110, 253, 0.9)',
+                                        'rgba(111, 66, 193, 0.9)',
+                                        'rgba(25, 135, 84, 0.9)',
+                                        'rgba(220, 53, 69, 0.9)',
+                                        'rgba(255, 193, 7, 0.9)',
+                                        'rgba(32, 201, 151, 0.9)',
+                                        'rgba(13, 202, 240, 0.9)',
+                                        'rgba(253, 126, 20, 0.9)'
+                                    ],
+                                    borderWidth: 2,
+                                    borderColor: '#fff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                cutout: '60%',
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            padding: 20,
+                                            usePointStyle: true
+                                        }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const label = context.label || '';
+                                                const value = context.raw || 0;
+                                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                const percentage = Math.round((value / total) * 100);
+                                                return `${label}: ${value} (${percentage}%)`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        </text>
+                }
+
+                // Gráfico de solicitudes por técnico
+                @if (Model.SolicitudesPorTecnico.Any())
+                {
+                        <text>
+                        const ctx2 = document.getElementById('tecnicosChart').getContext('2d');
+                        tecnicosChart = new Chart(ctx2, {
+                            type: 'bar',
+                            data: {
+                                labels: @Html.Raw(Json.Serialize(Model.SolicitudesPorTecnico.Keys)),
+                                datasets: [{
+                                    label: 'Tickets Asignados',
+                                    data: @Html.Raw(Json.Serialize(Model.SolicitudesPorTecnico.Values)),
+                                    backgroundColor: 'rgba(25, 135, 84, 0.8)',
+                                    borderColor: 'rgba(25, 135, 84, 1)',
+                                    borderWidth: 1,
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Cantidad de Tickets'
+                                        }
+                                    },
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Técnicos'
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                        </text>
+                }
+            }
+
+            // Función para actualizar gráficas con filtros de fecha
+            function actualizarGraficasConFiltros(fechaInicio, fechaFin, periodo) {
+                // Mostrar loading
+                mostrarLoadingGraficas();
+
+                // Hacer llamada AJAX para obtener datos filtrados
+                $.get('/Admin/ObtenerEstadisticasFiltradas', {
+                    fechaInicio: fechaInicio,
+                    fechaFin: fechaFin,
+                    periodo: periodo
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        const datos = response.data;
+
+                        // Actualizar gráfica de problemas
+                        if (problemasChart && datos.solicitudesPorTipo) {
+                            problemasChart.data.labels = Object.keys(datos.solicitudesPorTipo);
+                            problemasChart.data.datasets[0].data = Object.values(datos.solicitudesPorTipo);
+                            problemasChart.update();
+                            document.getElementById('totalProblemas').textContent =
+                                Object.values(datos.solicitudesPorTipo).reduce((a, b) => a + b, 0) + ' total';
+                        }
+
+                        // Actualizar gráfica de técnicos
+                        if (tecnicosChart && datos.solicitudesPorTecnico) {
+                            tecnicosChart.data.labels = Object.keys(datos.solicitudesPorTecnico);
+                            tecnicosChart.data.datasets[0].data = Object.values(datos.solicitudesPorTecnico);
+                            tecnicosChart.update();
+                        }
+
+                        // Actualizar rangos de fechas
+                        if (datos.rangoFechas) {
+                            document.getElementById('rangoFechasProblemas').textContent = datos.rangoFechas;
+                            document.getElementById('rangoFechasTecnicos').textContent = datos.rangoFechas;
+                        }
+
+                        // Mostrar notificación de éxito
+                        mostrarNotificacion('Gráficas actualizadas correctamente', 'success');
+                    } else {
+                        mostrarNotificacion('Error al cargar los datos filtrados', 'error');
+                    }
+                })
+                .fail(function() {
+                    mostrarNotificacion('Error de conexión al cargar los datos', 'error');
+                })
+                .always(function() {
+                    // Ocultar loading
+                    ocultarLoadingGraficas();
+                });
+            }
+
+            // Funciones de utilidad para loading
+            function mostrarLoadingGraficas() {
+                document.getElementById('loadingProblemas').style.display = 'block';
+                document.getElementById('loadingTecnicos').style.display = 'block';
+                document.getElementById('aplicarFiltro').disabled = true;
+                document.getElementById('aplicarFiltro').innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Procesando...';
+            }
+
+            function ocultarLoadingGraficas() {
+                document.getElementById('loadingProblemas').style.display = 'none';
+                document.getElementById('loadingTecnicos').style.display = 'none';
+                document.getElementById('aplicarFiltro').disabled = false;
+                document.getElementById('aplicarFiltro').innerHTML = '<i class="bi bi-filter me-1"></i>Aplicar';
+            }
+
+            function mostrarNotificacion(mensaje, tipo) {
+                // Implementación simple de notificación
+                const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+                const alertHtml = `
+                    <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                        <i class="bi ${tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'} me-2"></i>
+                        ${mensaje}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                // Insertar después del header
+                const header = document.querySelector('.container-fluid .d-flex.justify-content-between');
+                header.insertAdjacentHTML('afterend', alertHtml);
+
+                // Auto-remover después de 3 segundos
+                setTimeout(() => {
+                    const alert = document.querySelector('.alert');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 3000);
+            }
+
+            // Inicializar cuando el documento esté listo
+            document.addEventListener('DOMContentLoaded', function() {
+                inicializarGraficas();
+
+                // Manejar cambio de período predefinido
+                document.querySelectorAll('input[name="Periodo"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        const periodo = this.value;
+
+                        if (periodo !== 'personalizado') {
+                            // Deshabilitar inputs de fecha cuando se selecciona un período predefinido
+                            document.getElementById('fechaInicio').disabled = true;
+                            document.getElementById('fechaFin').disabled = true;
+
+                            // Aplicar filtros automáticamente
+                            aplicarFiltrosAutomaticos(periodo);
+                        } else {
+                            // Habilitar inputs de fecha para período personalizado
+                            document.getElementById('fechaInicio').disabled = false;
+                            document.getElementById('fechaFin').disabled = false;
+                        }
+                    });
+                });
+
+                // Aplicar filtros cuando cambian las fechas manualmente
+                document.getElementById('fechaInicio').addEventListener('change', aplicarFiltrosManuales);
+                document.getElementById('fechaFin').addEventListener('change', aplicarFiltrosManuales);
+
+                function aplicarFiltrosAutomaticos(periodo) {
+                    actualizarGraficasConFiltros(null, null, periodo);
+                }
+
+                function aplicarFiltrosManuales() {
+                    const fechaInicio = document.getElementById('fechaInicio').value;
+                    const fechaFin = document.getElementById('fechaFin').value;
+
+                    if (fechaInicio && fechaFin) {
+                        actualizarGraficasConFiltros(fechaInicio, fechaFin, 'personalizado');
+                    }
+                }
+
+                // Configurar botón aplicar filtro del formulario
+                document.getElementById('filtrosForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const fechaInicio = document.getElementById('fechaInicio').value;
+                    const fechaFin = document.getElementById('fechaFin').value;
+                    const periodo = document.querySelector('input[name="Periodo"]:checked').value;
+
+                    if (periodo === 'personalizado' && (!fechaInicio || !fechaFin)) {
+                        mostrarNotificacion('Por favor seleccione ambas fechas para el período personalizado', 'error');
+                        return;
+                    }
+
+                    if (periodo === 'personalizado' && new Date(fechaInicio) > new Date(fechaFin)) {
+                        mostrarNotificacion('La fecha de inicio no puede ser mayor a la fecha de fin', 'error');
+                        return;
+                    }
+
+                    // Enviar formulario
+                    this.submit();
+                });
+            });
+        </script>
+    }
+
+    <script>
+        // Variables globales para control del estado
+        let pendingReload = false;
+
+        $(document).ready(function() {
+            // Toggle campos de empleado
+            $('#userType').change(function() {
+                const userType = $(this).val();
+                if (userType === 'Usuario') {
+                    $('#employeeFields').slideDown(300);
+                } else {
+                    $('#employeeFields').slideUp(300);
+                }
+            });
+
+            // Toggle visibilidad de contraseña
+            $('.toggle-password').click(function() {
+                const target = $(this).data('target');
+                const input = $('#' + target);
+                const icon = $(this).find('i');
+
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+
+            // Validación de fortaleza de contraseña
+            $('#password').on('input', function() {
+                const password = $(this).val();
+                const strengthBar = $('#passwordStrength');
+                const feedback = $('#passwordFeedback');
+
+                let strength = 0;
+                let message = 'Seguridad de la contraseña';
+                let color = 'bg-danger';
+
+                if (password.length >= 8) strength += 25;
+                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength += 25;
+                if (password.match(/\d/)) strength += 25;
+                if (password.match(/[^a-zA-Z\d]/)) strength += 25;
+
+                if (strength >= 75) {
+                    message = 'Contraseña fuerte ✓';
+                    color = 'bg-success';
+                } else if (strength >= 50) {
+                    message = 'Contraseña media';
+                    color = 'bg-warning';
+                } else if (strength >= 25) {
+                    message = 'Contraseña débil';
+                    color = 'bg-danger';
+                } else {
+                    message = 'Muy débil';
+                    color = 'bg-danger';
+                }
+
+                strengthBar.css('width', strength + '%').removeClass('bg-danger bg-warning bg-success').addClass(color);
+                feedback.text(message);
+            });
+
+            // Validación de confirmación de contraseña
+            $('#confirmPassword').on('input', function() {
+                const password = $('#password').val();
+                const confirm = $(this).val();
+                const feedback = $('#confirmFeedback');
+
+                if (confirm === '') {
+                    feedback.text('Las contraseñas deben coincidir').removeClass('text-success text-danger').addClass('text-muted');
+                    $(this).removeClass('is-valid is-invalid');
+                } else if (password === confirm) {
+                    feedback.text('✓ Las contraseñas coinciden').removeClass('text-muted text-danger').addClass('text-success');
+                    $(this).removeClass('is-invalid').addClass('is-valid');
+                } else {
+                    feedback.text('✗ Las contraseñas no coinciden').removeClass('text-muted text-success').addClass('text-danger');
+                    $(this).removeClass('is-valid').addClass('is-invalid');
+                }
+            });
+
+            // === FORMULARIO DE CREACIÓN DE USUARIO - MODIFICADO ===
+            $('#userForm').submit(function(e) {
+                e.preventDefault();
+
+                const password = $('#password').val();
+                const confirmPassword = $('#confirmPassword').val();
+                const userType = $('#userType').val();
+
+                // Validaciones
+                if (!userType) {
+                    showErrorModal('Campo requerido', 'Por favor seleccione un tipo de usuario');
+                    $('#userType').focus();
+                    return false;
+                }
+
+                if (password !== confirmPassword) {
+                    showErrorModal('Error de validación', 'Las contraseñas no coinciden');
+                    return false;
+                }
+
+                if (password.length < 8) {
+                    showErrorModal('Contraseña insegura', 'La contraseña debe tener al menos 8 caracteres');
+                    return false;
+                }
+
+                // Mostrar modal de carga
+                showLoadingModal('Creando usuario...');
+
+                // Enviar formulario vía AJAX
+                const formData = new FormData(this);
+
+                fetch($(this).attr('action'), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        // Si hay redirección, asumimos éxito
+                        hideLoadingModal();
+                        $('#userModal').modal('hide');
+                        showSuccessModal('Usuario Creado', 'El usuario se ha creado exitosamente.');
+                        pendingReload = true;
+                    } else if (response.ok) {
+                        hideLoadingModal();
+                        $('#userModal').modal('hide');
+                        showSuccessModal('Usuario Creado', 'El usuario se ha creado exitosamente.');
+                        pendingReload = true;
+                    } else {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                })
+                .catch(error => {
+                    hideLoadingModal();
+                    showErrorModal('Error al crear usuario', 'No se pudo crear el usuario. Intente nuevamente.');
+                    console.error('Error:', error);
+                });
+
+                return false;
+            });
+
+            // === SISTEMA DE NOTIFICACIONES MODALES ===
+            function showLoadingModal(message = 'Procesando solicitud...') {
+                $('#loadingModalMessage').text(message);
+                $('#loadingModal').modal('show');
+            }
+
+            function hideLoadingModal() {
+                $('#loadingModal').modal('hide');
+            }
+
+            function showSuccessModal(title, message, autoClose = true) {
+                // Configurar como éxito
+                $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                     .addClass('text-success bi-check-circle-fill');
+                $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+                $('#successModalTitle').text(title);
+                $('#successModalMessage').text(message);
+                $('#successModal').modal('show');
+
+                if (autoClose) {
+                    setTimeout(() => {
+                        if ($('#successModal').is(':visible')) {
+                            $('#successModal').modal('hide');
+                        }
+                    }, 3000);
+                }
+            }
+
+            function showErrorModal(title, message, autoClose = true) {
+                // Configurar como error
+                $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-warning bi-exclamation-triangle-fill')
+                                     .addClass('text-danger bi-exclamation-triangle-fill');
+                $('#successModalButton').removeClass('btn-success btn-warning').addClass('btn-danger');
+                $('#successModalTitle').text(title);
+                $('#successModalMessage').text(message);
+                $('#successModal').modal('show');
+
+                if (autoClose) {
+                    setTimeout(() => {
+                        if ($('#successModal').is(':visible')) {
+                            $('#successModal').modal('hide');
+                        }
+                    }, 4000);
+                }
+            }
+
+            function showWarningModal(title, message, autoClose = true) {
+                // Configurar como advertencia
+                $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-danger bi-exclamation-triangle-fill')
+                                     .addClass('text-warning bi-exclamation-triangle-fill');
+                $('#successModalButton').removeClass('btn-success btn-danger').addClass('btn-warning');
+                $('#successModalTitle').text(title);
+                $('#successModalMessage').text(message);
+                $('#successModal').modal('show');
+
+                if (autoClose) {
+                    setTimeout(() => {
+                        if ($('#successModal').is(':visible')) {
+                            $('#successModal').modal('hide');
+                        }
+                    }, 3500);
+                }
+            }
+
+            // Evento para recargar cuando se cierra el modal de éxito
+            $('#successModal').on('hidden.bs.modal', function() {
+                if (pendingReload) {
+                    window.location.reload();
+                    pendingReload = false;
+                }
+            });
+
+            // Limpiar formulario al cerrar modal de creación
+            $('#userModal').on('hidden.bs.modal', function() {
+                $(this).find('form').trigger('reset');
+                $(this).find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                $('#employeeFields').hide();
+                $('#passwordStrength').css('width', '0%');
+                $('#passwordFeedback').text('Seguridad de la contraseña');
+                $('#confirmFeedback').text('Las contraseñas deben coincidir').removeClass('text-success text-danger').addClass('text-muted');
+                $('#submitBtn').prop('disabled', false).html('<i class="bi bi-person-plus me-1"></i>Crear Usuario');
+            });
+
+            // Manejar notificaciones del servidor (TempData)
+            const serverMessage = '@TempData["SuccessMessage"]';
+            const serverError = '@TempData["ErrorMessage"]';
+            const serverWarning = '@TempData["WarningMessage"]';
+
+            if (serverMessage) {
+                showSuccessModal('Éxito', serverMessage);
+            }
+
+            if (serverError) {
+                showErrorModal('Error', serverError);
+            }
+
+            if (serverWarning) {
+                showWarningModal('Advertencia', serverWarning);
+            }
+        });
+    </script>
+}

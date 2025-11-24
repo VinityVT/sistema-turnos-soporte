@@ -1,0 +1,1282 @@
+﻿@using SistemaSoporte.Extensions
+@{
+    ViewData["Title"] = "Panel Técnico";
+    var solicitudesAsignadas = ViewBag.SolicitudesAsignadas as List<SIGESTEC.API.DTOs.TicketDTO> ?? new List<SIGESTEC.API.DTOs.TicketDTO>();
+    var solicitudesPendientes = ViewBag.SolicitudesPendientes as List<SIGESTEC.API.DTOs.TicketDTO> ?? new List<SIGESTEC.API.DTOs.TicketDTO>();
+    var ticketsResueltos = ViewBag.TicketsResueltos as List<SIGESTEC.API.DTOs.TicketDTO> ?? new List<SIGESTEC.API.DTOs.TicketDTO>();
+    var ticketsCancelados = ViewBag.TicketsCancelados as List<SIGESTEC.API.DTOs.TicketDTO> ?? new List<SIGESTEC.API.DTOs.TicketDTO>();
+    var successMessage = ViewBag.SuccessMessage as string;
+    var errorMessage = ViewBag.ErrorMessage as string;
+
+    // Estadísticas para el dashboard
+    var ticketsUrgentes = solicitudesAsignadas.Count(t => t.Prioridad == "Alta");
+    var ticketsEnProgreso = solicitudesAsignadas.Count(t => t.Estado == "En progreso");
+    var ticketsPendientesCount = solicitudesPendientes.Count;
+}
+
+<div class="container-fluid">
+    <!-- Alertas -->
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert" id="successAlert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <div>@successMessage</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert" id="errorAlert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <div>@errorMessage</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Dashboard de Métricas -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="card bg-primary bg-opacity-10 border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="text-primary mb-1">@solicitudesAsignadas.Count</h3>
+                            <span class="text-muted">Tickets Asignados</span>
+                        </div>
+                        <div class="avatar-lg bg-primary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="bi bi-list-check text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="card bg-warning bg-opacity-10 border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="text-warning mb-1">@ticketsUrgentes</h3>
+                            <span class="text-muted">Urgentes</span>
+                        </div>
+                        <div class="avatar-lg bg-warning bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="card bg-info bg-opacity-10 border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="text-info mb-1">@ticketsPendientesCount</h3>
+                            <span class="text-muted">Pendientes de Asignación</span>
+                        </div>
+                        <div class="avatar-lg bg-info bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="bi bi-hourglass-split text-info fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Tickets Asignados a Mí -->
+        <div class="col-lg-6">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-list-check text-primary me-2"></i> Mis Tickets Asignados
+                        <span class="badge bg-primary ms-2">@solicitudesAsignadas.Count</span>
+                    </h4>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-filter"></i> Filtrar
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item filter-tickets active" href="#" data-filter="all">Todos</a></li>
+                            <li><a class="dropdown-item filter-tickets" href="#" data-filter="urgent">Urgentes</a></li>
+                            <li><a class="dropdown-item filter-tickets" href="#" data-filter="progress">En Progreso</a></li>
+                            <li><a class="dropdown-item filter-tickets" href="#" data-filter="waiting">En Espera</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (solicitudesAsignadas.Any())
+                    {
+                        <div class="list-group list-group-flush" id="assignedTicketsList">
+                            @foreach (var ticket in solicitudesAsignadas.OrderByDescending(t => t.Prioridad == "Alta").ThenByDescending(t => t.FechaCreacion))
+                            {
+                                <div class="list-group-item border-0 p-4 ticket-item @(ticket.Prioridad == "Alta" ? "ticket-urgent" : "")"
+                                     data-priority="@ticket.Prioridad.ToLower()"
+                                     data-status="@ticket.Estado.ToLower().Replace(" ", "-")">
+                                    <div class="d-flex align-items-start">
+                                        <!-- Indicador de estado -->
+                                        <div class="ticket-status-indicator me-3 mt-1
+                                                                                                             @(ticket.Estado == "Terminado" ? "bg-success" :
+                                                                                                                                                                                                                                                                                                                                             ticket.Estado == "En progreso" ? "bg-primary" : "bg-warning")">
+                                </div>
+
+                                        <div class="flex-grow-1">
+                                            <!-- Header del ticket -->
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h5 class="mb-1">
+                                                        <span class="badge bg-secondary me-2">#@ticket.Id</span>
+                                                        @ticket.Titulo
+                                                    </h5>
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                                        <span class="badge bg-secondary">@ticket.TipoProblema</span>
+                                                @if (ticket.Prioridad == "Alta")
+                                                        {
+                                                            <span class="badge bg-danger blink">URGENTE</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>
+                                                    @ticket.FechaCreacion.ToLocalTime().ToString("HH:mm")
+                                                </small>
+                                            </div>
+
+                                            <!-- Información del usuario -->
+                                            <div class="user-info mb-3 bg-dark text-white p-3 rounded">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        <i class="bi bi-person text-primary"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>@ticket.UsuarioNombre</strong>
+                                                        <br>
+                                                        <small class="text-white-50">@ticket.UsuarioEmail</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Descripción -->
+                                            <p class="text-muted mb-3">@ticket.Descripcion.Truncate(120)</p>
+
+                                            <!-- Tiempo transcurrido -->
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calendar me-1"></i>
+                                                    Creado hace @GetTiempoTranscurrido(ticket.FechaCreacion)
+                                                </small>
+                                                @if (ticket.TiempoResolucion.HasValue)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        Resuelto en @GetTiempoResolucion(ticket.TiempoResolucion.Value)
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <!-- Acciones -->
+                                            <div class="d-flex gap-2 mb-3">
+                                                <!-- BOTÓN VER DETALLE -->
+                                                <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-eye me-1"></i> Ver Detalle
+                                                </a>
+
+                                                @if (ticket.Estado == "En progreso")
+                                                {
+                                                    <button type="button" class="btn btn-success btn-sm resolver-btn"
+                                                            data-ticket-id="@ticket.Id"
+                                                            data-ticket-titulo="@ticket.Titulo">
+                                                        <i class="bi bi-check-circle me-1"></i> Resolver
+                                                    </button>
+                                                }
+                                            </div>
+
+                                            @if (ticket.Estado == "Terminado" && !string.IsNullOrEmpty(ticket.ComentarioResolucion))
+                                            {
+                                                <div class="alert alert-success mt-3">
+                                                    <strong><i class="bi bi-check-circle me-1"></i>Solución aplicada:</strong>
+                                                    <p class="mb-0 mt-1">@ticket.ComentarioResolucion</p>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-check-circle display-4 opacity-50"></i>
+                            <p class="mt-3 h5">No tienes tickets asignados</p>
+                            <p class="mb-0">Los tickets que te asignen aparecerán aquí</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Pendientes de Asignación -->
+        <div class="col-lg-6">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-hourglass-split text-warning me-2"></i> Tickets Pendientes
+                        <span class="badge bg-warning text-dark ms-2">@solicitudesPendientes.Count</span>
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    @if (solicitudesPendientes.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var ticket in solicitudesPendientes.OrderByDescending(t => t.Prioridad == "Alta").ThenByDescending(t => t.FechaCreacion))
+                            {
+                                <div class="list-group-item border-0 p-4">
+                                    <div class="d-flex align-items-start">
+                                        <!-- Indicador de prioridad -->
+                                        <div class="ticket-priority-indicator me-3 mt-1
+                                                                                                             @(ticket.Prioridad == "Alta" ? "bg-danger" :
+                                                                                                                                                                                                                                                                                                                                             ticket.Prioridad == "Media" ? "bg-warning" : "bg-success")">
+                                </div>
+
+                                        <div class="flex-grow-1">
+                                            <!-- Header del ticket -->
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h5 class="mb-1">
+                                                        <span class="badge bg-secondary me-2">#@ticket.Id</span>
+                                                        @ticket.Titulo
+                                                    </h5>
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                                        <span class="badge bg-secondary">@ticket.TipoProblema</span>
+                                                        <span class="badge bg-warning text-dark">Sin asignar</span>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>
+                                                    @ticket.FechaCreacion.ToLocalTime().ToString("HH:mm")
+                                                </small>
+                                            </div>
+
+                                            <!-- Información del usuario -->
+                                            <div class="user-info mb-3 bg-dark text-white p-3 rounded">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        <i class="bi bi-person text-primary"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>@ticket.UsuarioNombre</strong>
+                                                        <br>
+                                                        <small class="text-white-50">@ticket.UsuarioEmail</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Descripción -->
+                                            <p class="text-muted mb-3">@ticket.Descripcion.Truncate(120)</p>
+
+                                            <!-- Tiempo de espera -->
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock-history me-1"></i>
+                                                    Esperando asignación hace @GetTiempoTranscurrido(ticket.FechaCreacion)
+                                                </small>
+                                            </div>
+
+                                            <!-- Acciones -->
+                                            <div class="d-flex gap-2">
+                                                <form asp-action="Asignar" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@ticket.Id" />
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        <i class="bi bi-person-plus me-1"></i> Asignarme
+                                                    </button>
+                                                </form>
+
+                                                <!-- BOTÓN NUEVO PARA ADMIN -->
+                                        @if (User.IsInRole("Admin"))
+                                                {
+                                                    <button type="button" class="btn btn-outline-warning btn-sm asignar-tecnico-admin"
+                                                            data-ticket-id="@ticket.Id"
+                                                            data-ticket-titulo="@ticket.Titulo">
+                                                        <i class="bi bi-person-gear"></i> Asignar
+                                                    </button>
+                                                }
+
+                                                <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                                   class="btn btn-outline-secondary btn-sm">
+                                                    <i class="bi bi-eye me-1"></i> Ver Detalle
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-check-circle display-4 opacity-50"></i>
+                            <p class="mt-3 h5">No hay tickets pendientes</p>
+                            <p class="mb-0">Todos los tickets están asignados o resueltos</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORIAL DE TICKETS RESUELTOS -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-clock-history text-success me-2"></i> Mi Historial de Tickets Resueltos
+                        <span class="badge bg-success ms-2">@ticketsResueltos.Count</span>
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    @if (ticketsResueltos.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Usuario</th>
+                                        <th>Tipo</th>
+                                        <th>Prioridad</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Fecha Resolución</th>
+                                        <th>Tiempo Resolución</th>
+                                        <th>Comentario Solución</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ticket in ticketsResueltos.OrderByDescending(t => t.FechaResolucion))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-secondary">#@ticket.Id</span>
+                                            </td>
+                                            <td>
+                                                <strong>@ticket.Titulo</strong>
+                                                <br>
+                                                <small class="text-muted">@ticket.Descripcion.Truncate(50)</small>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        <i class="bi bi-person text-info"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div>@ticket.UsuarioNombre</div>
+                                                        <small class="text-muted">@ticket.UsuarioEmail</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@ticket.TipoProblema</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    @ticket.FechaCreacion.ToString("dd/MM/yyyy hh:mm tt")
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    @if (ticket.FechaResolucion.HasValue)
+                                                    {
+                                                        @ticket.FechaResolucion.Value.ToString("dd/MM/yyyy hh:mm tt")
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">N/A</span>
+                                                    }
+                                                </small>
+                                            </td>
+                                            <td>
+                                                @if (ticket.TiempoResolucion.HasValue)
+                                                {
+                                                    <span class="badge bg-success">@GetTiempoResolucion(ticket.TiempoResolucion.Value)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(ticket.ComentarioResolucion))
+                                                {
+                                                    <span class="text-muted small" title="@ticket.ComentarioResolucion">
+                                                        @ticket.ComentarioResolucion.Truncate(30)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">Sin comentario</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                                   class="btn btn-outline-primary btn-sm" title="Ver detalle">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-inbox display-4 opacity-50"></i>
+                            <p class="mt-3 h5">No hay tickets resueltos</p>
+                            <p class="mb-0">Los tickets que resuelvas aparecerán en este historial</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORIAL DE TICKETS CANCELADOS -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-x-circle text-danger me-2"></i> Mis Tickets Cancelados
+                        <span class="badge bg-danger ms-2">@ticketsCancelados.Count</span>
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    @if (ticketsCancelados.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Título</th>
+                                        <th>Usuario</th>
+                                        <th>Tipo</th>
+                                        <th>Prioridad</th>
+                                        <th>Fecha Creación</th>
+                                        <th>Fecha Cancelación</th>
+                                        <th>Motivo Cancelación</th>
+                                        <th>Cancelado Por</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ticket in ticketsCancelados.OrderByDescending(t => t.FechaResolucion))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-secondary">#@ticket.Id</span>
+                                            </td>
+                                            <td>
+                                                <strong>@ticket.Titulo</strong>
+                                                <br>
+                                                <small class="text-muted">@ticket.Descripcion.Truncate(50)</small>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        <i class="bi bi-person text-warning"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div>@ticket.UsuarioNombre</div>
+                                                        <small class="text-muted">@ticket.UsuarioEmail</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@ticket.TipoProblema</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    @ticket.FechaCreacion.ToString("dd/MM/yyyy hh:mm tt")
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    @if (ticket.FechaResolucion.HasValue)
+                                                    {
+                                                        @ticket.FechaResolucion.Value.ToString("dd/MM/yyyy hh:mm tt")
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">N/A</span>
+                                                    }
+                                                </small>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(ticket.ComentarioCancelacion))
+                                                {
+                                                    <span class="text-danger small" title="@ticket.ComentarioCancelacion">
+                                                        @ticket.ComentarioCancelacion.Truncate(30)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">Sin comentario</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(ticket.CanceladoPor))
+                                                {
+                                                    <span class="badge bg-danger">@ticket.CanceladoPor</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                                   class="btn btn-outline-primary btn-sm" title="Ver detalle">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-x-circle display-4 opacity-50"></i>
+                            <p class="mt-3 h5">No hay tickets cancelados</p>
+                            <p class="mb-0">Los tickets que canceles aparecerán en este historial</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA RESOLVER TICKETS -->
+<div class="modal fade" id="resolverModal" tabindex="-1" aria-labelledby="resolverModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resolverModalLabel">Resolver Ticket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="resolverForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="ticketIdInput" value="" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="comentarioResolucion" class="form-label fw-bold">Descripción de la Solución *</label>
+                        <textarea id="comentarioResolucion" name="comentario" class="form-control" rows="4"
+                                  placeholder="Describe detalladamente cómo solucionaste el problema..."
+                                  required maxlength="500"></textarea>
+                        <div class="form-text">
+                            Esta información será visible para el usuario y quedará registrada en el historial.
+                        </div>
+                        <div class="invalid-feedback" id="comentarioResolucionError"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="submitResolverButton">
+                        <i class="bi bi-check-circle me-1"></i> Confirmar Resolución
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Asignar Técnico (Admin) -->
+<div class="modal fade" id="asignarTecnicoModal" tabindex="-1" aria-labelledby="asignarTecnicoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="asignarTecnicoModalLabel">Asignar Técnico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ticketIdAsignar">
+                <div class="mb-3">
+                    <label for="tecnicoSelect" class="form-label fw-bold">Seleccionar Técnico *</label>
+                    <select id="tecnicoSelect" class="form-select" required>
+                        <option value="">Cargando técnicos...</option>
+                    </select>
+                    <div class="form-text">Seleccione el técnico al que desea asignar este ticket.</div>
+                </div>
+                <div id="ticketInfo" class="alert alert-info">
+                    <!-- Información del ticket se mostrará aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmarAsignacionTecnico">
+                    <i class="bi bi-check-circle me-1"></i> Confirmar Asignación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content bg-dark border-light">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3 text-white">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-light mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+        }
+
+        .avatar-lg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .ticket-status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .ticket-priority-indicator {
+            width: 8px;
+            height: 40px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .ticket-item {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent !important;
+        }
+
+        .ticket-urgent {
+            border-left-color: #dc3545 !important;
+            background-color: rgba(220, 53, 69, 0.05);
+        }
+
+        .ticket-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(4px);
+        }
+
+        .user-info {
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .blink {
+            animation: blink-animation 1s infinite;
+        }
+
+        @@keyframes blink-animation {
+            0%, 50% {
+                opacity: 1;
+            }
+
+            51%, 100% {
+                opacity: 0.3;
+            }
+        }
+
+        .card {
+            transition: transform 0.2s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-2px);
+            }
+
+        .badge {
+            font-size: 0.7em;
+            font-weight: 500;
+        }
+
+        .list-group-item {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+            .list-group-item:last-child {
+                border-bottom: none;
+            }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* Estilos para el modal */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Estilos para la tabla de historial */
+        .table > :not(caption) > * > * {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        /* Estilos para los modales */
+        #successModal .modal-content,
+        #loadingModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Estilos para botones de asignación admin */
+        .asignar-tecnico-admin {
+            border-color: #ffc107 !important;
+            color: #ffc107 !important;
+        }
+
+            .asignar-tecnico-admin:hover {
+                background-color: #ffc107 !important;
+                color: #000 !important;
+            }
+
+        .btn-group .asignar-tecnico-admin {
+            margin-left: 2px;
+        }
+        /* Estilos para modales en tema oscuro */
+        .modal-content.bg-dark {
+            background-color: #1a1d23 !important;
+            border: 1px solid #495057;
+        }
+
+            .modal-content.bg-dark .text-white {
+                color: #ffffff !important;
+            }
+
+            .modal-content.bg-dark .text-light {
+                color: #e9ecef !important;
+            }
+
+            .modal-content.bg-dark .border-light {
+                border-color: #6c757d !important;
+            }
+
+        /* Asegurar que los modales se vean bien en tema oscuro */
+        [data-bs-theme="dark"] .modal-content {
+            background-color: #1a1d23;
+            color: #ffffff;
+        }
+
+        [data-bs-theme="dark"] .modal-header {
+            border-bottom-color: #495057;
+        }
+
+        [data-bs-theme="dark"] .modal-footer {
+            border-top-color: #495057;
+        }
+
+        /* Spinner en tema oscuro */
+        .spinner-border.text-primary {
+            color: #0d6efd !important;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            console.log('Documento listo - Inicializando scripts...');
+
+            // Auto-ocultar alertas después de 5 segundos
+            setTimeout(function() {
+                $('#successAlert, #errorAlert').alert('close');
+            }, 5000);
+
+            // Filtrado de tickets asignados
+            $('.filter-tickets').click(function(e) {
+                e.preventDefault();
+                $('.filter-tickets').removeClass('active');
+                $(this).addClass('active');
+
+                const filter = $(this).data('filter');
+                filterTickets(filter);
+            });
+
+            // MANEJADOR PARA BOTONES DE RESOLVER - DELEGACIÓN DE EVENTOS
+            $(document).on('click', '.resolver-btn', function(e) {
+                e.preventDefault();
+                console.log('Botón resolver clickeado');
+
+                const ticketId = $(this).data('ticket-id');
+                const ticketTitulo = $(this).data('ticket-titulo');
+
+                console.log('Ticket ID:', ticketId, 'Título:', ticketTitulo);
+
+                // Configurar el modal
+                $('#resolverModalLabel').text('Resolver Ticket #' + ticketId + ' - ' + ticketTitulo);
+                $('#ticketIdInput').val(ticketId);
+                $('#comentarioResolucion').val('');
+                $('#comentarioResolucion').removeClass('is-invalid');
+                $('#comentarioResolucionError').text('');
+
+                // Mostrar el modal
+                $('#resolverModal').modal('show');
+            });
+
+            // ENVÍO DEL FORMULARIO DE RESOLUCIÓN CON AJAX
+            $('#resolverForm').on('submit', function(e) {
+                e.preventDefault();
+                console.log('Formulario resolver enviado');
+
+                if (validarFormularioResolucion()) {
+                    enviarResolucion();
+                }
+            });
+
+            // VALIDACIÓN EN TIEMPO REAL
+            $('#comentarioResolucion').on('input', function() {
+                const comentario = $(this).val().trim();
+                if (comentario) {
+                    $(this).removeClass('is-invalid');
+                    $('#comentarioResolucionError').text('');
+                }
+            });
+
+            // === FUNCIONALIDAD DE ASIGNAR TÉCNICO DESDE PANEL TÉCNICO (ADMIN) ===
+
+            // Manejar clic en botones de asignación para admin
+            $(document).on('click', '.asignar-tecnico-admin', function() {
+                const ticketId = $(this).data('ticket-id');
+                const ticketTitulo = $(this).data('ticket-titulo');
+
+                asignarTecnicoDesdeTecnicoPanel(ticketId, ticketTitulo);
+            });
+
+            // Configurar el botón de confirmación de asignación
+            $('#confirmarAsignacionTecnico').click(confirmarAsignacionDesdeTecnicoPanel);
+
+            function filterTickets(filter) {
+                $('.ticket-item').show();
+
+                switch(filter) {
+                    case 'urgent':
+                        $('.ticket-item').not('.ticket-urgent').hide();
+                        break;
+                    case 'progress':
+                        $('.ticket-item').not('[data-status="en-progreso"]').hide();
+                        break;
+                    case 'waiting':
+                        $('.ticket-item').not('[data-status="en-espera"]').hide();
+                        break;
+                    // 'all' muestra todos
+                }
+            }
+
+            // Efectos visuales
+            $('.ticket-item').hover(
+                function() {
+                    $(this).addClass('shadow-sm');
+                },
+                function() {
+                    $(this).removeClass('shadow-sm');
+                }
+            );
+
+            // Tooltips para la tabla de historial
+            $('[title]').tooltip({
+                trigger: 'hover',
+                placement: 'top'
+            });
+        });
+
+        // === FUNCIONES DE ASIGNACIÓN DE TÉCNICO ===
+
+        function asignarTecnicoDesdeTecnicoPanel(ticketId, ticketTitulo) {
+            console.log('Asignando técnico para ticket:', ticketId);
+            $('#ticketIdAsignar').val(ticketId);
+
+            showLoadingModal('Cargando técnicos disponibles...');
+            cargarTecnicosDisponibles(ticketId, ticketTitulo);
+        }
+
+        function cargarTecnicosDisponibles(ticketId, ticketTitulo) {
+            console.log('Cargando técnicos disponibles...');
+
+            $.ajax({
+                url: '@Url.Action("ObtenerTecnicosDisponibles", "Admin")',
+                type: 'GET',
+                success: function(response) {
+                    console.log('Respuesta de técnicos:', response);
+                    hideLoadingModal(); // Ocultar modal de carga
+
+                    if (response.success && response.data && response.data.length > 0) {
+                        const select = $('#tecnicoSelect');
+                        select.empty();
+                        select.append('<option value="">Seleccione un técnico...</option>');
+
+                        response.data.forEach(tecnico => {
+                            select.append(`<option value="${tecnico.id}">${tecnico.nombreCompleto} - ${tecnico.email}</option>`);
+                        });
+
+                        // Configurar el modal
+                        $('#asignarTecnicoModalLabel').text('Asignar Técnico - Ticket #' + ticketId);
+                        $('#ticketInfo').html(`
+                            <strong>${ticketTitulo}</strong><br>
+                            <small class="text-muted">Ticket #${ticketId} - Asignar a técnico específico</small>
+                        `);
+
+                        $('#asignarTecnicoModal').modal('show');
+                    } else {
+                        // Si no hay técnicos o hay error, mostrar mensaje
+                        const errorMsg = response.message || 'No hay técnicos disponibles en este momento';
+                        showErrorModal('Error', errorMsg);
+                        console.error('Error al cargar técnicos:', response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al cargar técnicos:', error);
+                    hideLoadingModal(); // Ocultar modal de carga en caso de error
+                    showErrorModal('Error', 'Error al cargar los técnicos disponibles. Intente nuevamente.');
+                }
+            });
+        }
+
+        function confirmarAsignacionDesdeTecnicoPanel() {
+            const ticketId = $('#ticketIdAsignar').val();
+            const tecnicoId = $('#tecnicoSelect').val();
+
+            if (!tecnicoId) {
+                showErrorModal('Error', 'Por favor seleccione un técnico');
+                return;
+            }
+
+            console.log('Confirmando asignación - Ticket:', ticketId, 'Técnico:', tecnicoId);
+            showLoadingModal('Asignando técnico...');
+
+            $.ajax({
+                url: '@Url.Action("AsignarTicket", "Admin")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: parseInt(ticketId),
+                    tecnicoId: tecnicoId
+                }),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    console.log('Respuesta de asignación:', response);
+                    hideLoadingModal(); // Ocultar modal de carga
+
+                    if (response.success) {
+                        $('#asignarTecnicoModal').modal('hide');
+                        showSuccessModal('Éxito', 'Técnico asignado correctamente');
+
+                        // Recargar la página después de 2 segundos
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        showErrorModal('Error', response.message || 'Error al asignar el técnico');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error en asignación:', error);
+                    hideLoadingModal(); // Ocultar modal de carga en caso de error
+                    showErrorModal('Error', 'Error al asignar el técnico. Intente nuevamente.');
+                }
+            });
+        }
+
+        function showSuccessModal(title, message) {
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+        }
+
+        function showErrorModal(title, message) {
+            $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-danger bi-exclamation-triangle-fill');
+            $('#successModalButton').removeClass('btn-success btn-warning').addClass('btn-danger');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+        }
+
+        // === FUNCIONES DE RESOLUCIÓN DE TICKETS (EXISTENTES) ===
+
+        function validarFormularioResolucion() {
+            let isValid = true;
+
+            // Limpiar errores anteriores
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').text('');
+
+            // Validar comentario
+            const comentario = $('#comentarioResolucion').val().trim();
+            if (!comentario) {
+                $('#comentarioResolucion').addClass('is-invalid');
+                $('#comentarioResolucionError').text('Por favor, ingrese una descripción de la solución aplicada.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function enviarResolucion() {
+            console.log('Enviando resolución...');
+
+            // Mostrar modal de carga
+            showLoadingModal('Resolviendo ticket...');
+
+            // Preparar datos del formulario
+            const formData = new FormData();
+            formData.append('id', $('#ticketIdInput').val());
+            formData.append('comentario', $('#comentarioResolucion').val());
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+            console.log('Datos a enviar:', {
+                id: $('#ticketIdInput').val(),
+                comentario: $('#comentarioResolucion').val()
+            });
+
+            // Enviar vía AJAX
+            fetch('@Url.Action("Resolver", "Tecnico")', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                }
+            })
+            .then(response => {
+                console.log('Respuesta recibida:', response);
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos recibidos:', data);
+                hideLoadingModal(); // Ocultar modal de carga
+
+                if (data.success) {
+                    $('#resolverModal').modal('hide');
+                    showSuccessModal('Ticket Resuelto', 'El ticket se ha resuelto exitosamente.');
+
+                    // Recargar la página después de 2 segundos
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    // Mostrar errores del servidor
+                    mostrarErroresResolucion(data.errors || { General: data.message });
+                }
+            })
+            .catch(error => {
+                console.error('Error en fetch:', error);
+                hideLoadingModal(); // Ocultar modal de carga en caso de error
+                showErrorModal('Error', 'No se pudo resolver el ticket. Intente nuevamente. Error: ' + error.message);
+            });
+        }
+
+        function mostrarErroresResolucion(errors) {
+            if (errors && typeof errors === 'object') {
+                let errorMessages = [];
+
+                // Mostrar errores específicos por campo
+                Object.keys(errors).forEach(key => {
+                    const errorId = `#${key}Error`;
+                    const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
+
+                    if ($(errorId).length) {
+                        $(errorId).text(errorMessage);
+                        $(`#${key}`).addClass('is-invalid');
+                    }
+                    errorMessages.push(errorMessage);
+                });
+
+                if (errorMessages.length > 0) {
+                    showErrorModal('Error de validación', errorMessages.join('<br>'));
+                }
+            } else {
+                showErrorModal('Error', 'Ocurrió un error inesperado al procesar la solicitud.');
+            }
+        }
+
+        // Manejar cierre correcto de modales
+        $(document).on('hidden.bs.modal', '#loadingModal', function () {
+            // Limpiar cualquier backdrop persistente
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+        });
+    </script>
+}
+
+@functions {
+    string GetPriorityBadge(string prioridad)
+    {
+        return prioridad?.ToLower() switch
+        {
+            "alta" => "bg-danger",
+            "media" => "bg-warning text-dark",
+            "baja" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "terminado" => "bg-success",
+            "cancelado" => "bg-secondary",
+            "en progreso" => "bg-primary",
+            "en proceso" => "bg-primary",
+            "asignado" => "bg-info",
+            _ => "bg-warning text-dark"
+        };
+    }
+
+    string GetTiempoTranscurrido(DateTime fecha)
+    {
+        try
+        {
+            DateTime fechaLocal;
+
+            if (fecha.Kind == DateTimeKind.Utc)
+            {
+                fechaLocal = fecha.ToLocalTime();
+            }
+            else if (fecha.Kind == DateTimeKind.Unspecified)
+            {
+                fechaLocal = DateTime.SpecifyKind(fecha, DateTimeKind.Utc).ToLocalTime();
+            }
+            else
+            {
+                fechaLocal = fecha;
+            }
+
+            var tiempo = DateTime.Now - fechaLocal;
+
+            if (tiempo.TotalSeconds < 0)
+            {
+                tiempo = tiempo.Duration();
+                if (tiempo.TotalMinutes < 1)
+                    return "Recientemente";
+            }
+
+            if (tiempo.TotalDays >= 1)
+            {
+                return $"{(int)tiempo.TotalDays} día{(tiempo.TotalDays >= 2 ? "s" : "")}";
+            }
+            else if (tiempo.TotalHours >= 1)
+            {
+                return $"{(int)tiempo.TotalHours} hora{(tiempo.TotalHours >= 2 ? "s" : "")}";
+            }
+            else if (tiempo.TotalMinutes >= 1)
+            {
+                return $"{(int)tiempo.TotalMinutes} minuto{(tiempo.TotalMinutes >= 2 ? "s" : "")}";
+            }
+            else
+            {
+                return "Hace unos momentos";
+            }
+        }
+        catch (Exception)
+        {
+            return "Recientemente";
+        }
+    }
+
+    string GetTiempoResolucion(TimeSpan tiempo)
+    {
+        if (tiempo.TotalDays >= 1)
+        {
+            return $"{(int)tiempo.TotalDays}d {tiempo.Hours}h";
+        }
+        else if (tiempo.TotalHours >= 1)
+        {
+            return $"{(int)tiempo.TotalHours}h {tiempo.Minutes}m";
+        }
+        else
+        {
+            return $"{tiempo.Minutes}m";
+        }
+    }
+}

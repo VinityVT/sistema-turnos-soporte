@@ -1,0 +1,1019 @@
+﻿@using SistemaSoporte.Extensions
+@model List<SIGESTEC.API.DTOs.EquipoDTO>
+@{
+    ViewData["Title"] = "Gestión de Equipos";
+    // Calcular conteos una sola vez
+    var totalEquipos = Model?.Count ?? 0;
+    var disponibles = Model?.Count(e => e.Estado == "Disponible") ?? 0;
+    var enUso = Model?.Count(e => e.Estado == "EnUso") ?? 0;
+    var enMantenimiento = Model?.Count(e => e.Estado == "EnMantenimiento") ?? 0;
+    var dadosDeBaja = Model?.Count(e => e.Estado == "DadoDeBaja") ?? 0;
+}
+
+<div class="container-fluid">
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1 text-white">
+                <i class="bi bi-pc-display text-primary me-2"></i> @ViewData["Title"]
+            </h1>
+            <p class="text-muted mb-0">Administra el inventario de equipos y sus componentes</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <a asp-controller="Admin" asp-action="CrearEquipo" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Nuevo Equipo
+            </a>
+        </div>
+    </div>
+
+    <!-- Contenedor de Alertas -->
+    <div id="alertContainer"></div>
+    <div class="row">
+        <!-- Barra Lateral de Filtros -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3">
+                    <h6 class="mb-0 text-white">
+                        <i class="bi bi-funnel me-2"></i>Filtrar Equipos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Búsqueda -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-white">Buscar</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="N° serie, modelo, marca..." id="searchInput">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Estado -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-white">Estado</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="estado" data-value="all">
+                                Todos (@totalEquipos)
+                            </button>
+                            <button class="btn btn-sm btn-outline-success filter-btn" data-filter="estado" data-value="Disponible">
+                                Disponibles (@disponibles)
+                            </button>
+                            <button class="btn btn-sm btn-outline-info filter-btn" data-filter="estado" data-value="EnUso">
+                                En Uso (@enUso)
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="estado" data-value="EnMantenimiento">
+                                En Mantenimiento (@enMantenimiento)
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary filter-btn" data-filter="estado" data-value="DadoDeBaja">
+                                Dados de Baja (@dadosDeBaja)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Tipo -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-white">Tipo de Equipo</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="tipo" data-value="all">
+                                Todos
+                            </button>
+                            @foreach (var tipo in Model.Select(e => e.Tipo).Distinct().OrderBy(t => t))
+                            {
+                                <button class="btn btn-sm btn-outline-secondary filter-btn" data-filter="tipo" data-value="@tipo">
+                                    @tipo (@Model.Count(e => e.Tipo == tipo))
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Acciones Rápidas -->
+                    <div class="mt-4 pt-3 border-top">
+                        <label class="form-label small fw-bold text-white">Acciones Rápidas</label>
+                        <div class="d-grid gap-2">
+                            <a asp-controller="Admin" asp-action="CrearEquipo" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Equipo
+                            </a>
+                            <a asp-controller="Admin" asp-action="ReporteInventario" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-graph-up me-1"></i>Ver Reporte
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary" id="refreshButton">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Principal de Equipos -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0 text-white">
+                                <i class="bi bi-list-ul me-2"></i>Inventario de Equipos
+                                <span class="badge bg-primary ms-2" id="equipoCount">@totalEquipos</span>
+                            </h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="sortByEstado">
+                                    <i class="bi bi-sort-alpha-down"></i> Estado
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="sortByTipo">
+                                    <i class="bi bi-sort-numeric-down"></i> Tipo
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="sortByFecha">
+                                    <i class="bi bi-calendar"></i> Fecha
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <!-- Estado Vacío -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-pc-display display-1 text-muted opacity-25"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No hay equipos registrados</h5>
+                            <p class="text-muted mb-4">Comienza agregando el primer equipo al inventario</p>
+                            <a asp-controller="Admin" asp-action="CrearEquipo" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Agregar Primer Equipo
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Vista de Tarjetas (Mobile) -->
+                        <div class="d-lg-none">
+                            <div class="row g-3 p-3" id="equiposCardView">
+                                @foreach (var equipo in Model.OrderBy(e => e.Estado).ThenBy(e => e.Tipo))
+                                {
+                                    <div class="col-12 equipo-card"
+                                         data-estado="@equipo.Estado"
+                                         data-tipo="@equipo.Tipo"
+                                         data-fecha="@equipo.FechaAdquisicion.ToString("yyyyMMdd")"
+                                         data-search="@($"{equipo.Id} {equipo.NumeroSerie} {equipo.Modelo} {equipo.Marca} {equipo.Tipo}".ToLower())"
+                                         data-equipo-id="@equipo.Id">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body">
+                                                <!-- Header de la Tarjeta -->
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-pc-display text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0 fw-bold text-white">@equipo.Marca @equipo.Modelo</h6>
+                                                            <small class="text-muted">#@equipo.Id • @equipo.NumeroSerie</small>
+                                                        </div>
+                                                    </div>
+                                                    @if (equipo.HistorialIncidentes.Count > 0)
+                                                    {
+                                                        <span class="badge bg-danger" data-bs-toggle="tooltip" title="@equipo.HistorialIncidentes.Count incidente(s)">
+                                                            @equipo.HistorialIncidentes.Count
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <!-- Acciones -->
+                                                <div class="d-grid gap-2">
+                                                    <a asp-controller="Admin" asp-action="DetalleEquipo" asp-route-id="@equipo.Id"
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-eye me-1"></i>Ver Detalles
+                                                    </a>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <a asp-controller="Admin" asp-action="EditarEquipo" asp-route-id="@equipo.Id"
+                                                           class="btn btn-outline-warning btn-sm">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                        <a asp-controller="Admin" asp-action="AgregarIncidente" asp-route-id="@equipo.Id"
+                                                           class="btn btn-outline-info btn-sm">
+                                                            <i class="bi bi-plus-circle"></i>
+                                                        </a>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                                <i class="bi bi-gear"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="cambiarEstado(@equipo.Id, 'Disponible')">
+                                                                        <i class="bi bi-check-circle text-success me-2"></i>Disponible
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="cambiarEstado(@equipo.Id, 'EnUso')">
+                                                                        <i class="bi bi-person-check text-info me-2"></i>En Uso
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="cambiarEstado(@equipo.Id, 'EnMantenimiento')">
+                                                                        <i class="bi bi-tools text-warning me-2"></i>En Mantenimiento
+                                                                    </a>
+                                                                </li>
+                                                                @if (equipo.Estado != "DadoDeBaja")
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item text-danger" href="#" onclick="darDeBaja(@equipo.Id, '@equipo.NumeroSerie')">
+                                                                            <i class="bi bi-x-circle me-2"></i>Dar de Baja
+                                                                        </a>
+                                                                    </li>
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Vista de Tabla (Desktop) -->
+                        <div class="d-none d-lg-block">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Equipo</th>
+                                            <th>Información</th>
+                                            <th>Estado</th>
+                                            <th>Componentes</th>
+                                            <th>Incidentes</th>
+                                            <th>Fecha Adquisición</th>
+                                            <th class="text-end pe-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="equiposTableView">
+                                        @foreach (var equipo in Model.OrderBy(e => e.Estado).ThenBy(e => e.Tipo))
+                                        {
+                                            <tr class="equipo-row"
+                                                data-estado="@equipo.Estado"
+                                                data-tipo="@equipo.Tipo"
+                                                data-fecha="@equipo.FechaAdquisicion.ToString("yyyyMMdd")"
+                                                data-search="@($"{equipo.Id} {equipo.NumeroSerie} {equipo.Modelo} {equipo.Marca} {equipo.Tipo}".ToLower())"
+                                                data-equipo-id="@equipo.Id">
+                                                <td class="ps-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-pc-display text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-white">@equipo.Marca @equipo.Modelo</div>
+                                                            <small class="text-muted">#@equipo.Id • @equipo.NumeroSerie</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold mb-1 text-white">@equipo.Tipo</div>
+                                                    @if (!string.IsNullOrEmpty(equipo.Descripcion))
+                                                    {
+                                                        <small class="text-muted">@equipo.Descripcion.Truncate(60)</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">Sin descripción</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="badge @GetEstadoEquipoBadge(equipo.Estado) mb-1">@equipo.Estado</span>
+                                                    <br>
+                                                    <small class="text-muted">@GetAntiguedad(equipo.FechaAdquisicion)</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info" data-bs-toggle="tooltip" title="@string.Join(", ", equipo.Componentes.Select(c => c.Nombre))">
+                                                        @equipo.Componentes.Count componentes
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (equipo.HistorialIncidentes.Count > 0)
+                                                    {
+                                                        <span class="badge @GetIncidentesBadge(equipo.HistorialIncidentes.Count)">
+                                                            @equipo.HistorialIncidentes.Count
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success">0</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold text-white">@equipo.FechaAdquisicion.ToString("dd/MM/yyyy")</div>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-clock me-1"></i>@equipo.FechaAdquisicion.ToString("yyyy")
+                                                    </small>
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a asp-controller="Admin" asp-action="DetalleEquipo" asp-route-id="@equipo.Id"
+                                                           class="btn btn-outline-primary"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Ver detalles">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <a asp-controller="Admin" asp-action="EditarEquipo" asp-route-id="@equipo.Id"
+                                                           class="btn btn-outline-warning"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Editar">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                        <a asp-controller="Admin" asp-action="AgregarIncidente" asp-route-id="@equipo.Id"
+                                                           class="btn btn-outline-info"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Agregar incidente">
+                                                            <i class="bi bi-plus-circle"></i>
+                                                        </a>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-outline-secondary dropdown-toggle"
+                                                                    type="button" data-bs-toggle="dropdown"
+                                                                    data-bs-toggle="tooltip" title="Más acciones">
+                                                                <i class="bi bi-gear"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="cambiarEstado(@equipo.Id, 'Disponible')">
+                                                                        <i class="bi bi-check-circle text-success me-2"></i>Disponible
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="cambiarEstado(@equipo.Id, 'EnUso')">
+                                                                        <i class="bi bi-person-check text-info me-2"></i>En Uso
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="cambiarEstado(@equipo.Id, 'EnMantenimiento')">
+                                                                        <i class="bi bi-tools text-warning me-2"></i>En Mantenimiento
+                                                                    </a>
+                                                                </li>
+                                                                @if (equipo.Estado != "DadoDeBaja")
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item text-danger" href="#" onclick="darDeBaja(@equipo.Id, '@equipo.NumeroSerie')">
+                                                                            <i class="bi bi-x-circle me-2"></i>Dar de Baja
+                                                                        </a>
+                                                                    </li>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item text-success" href="#" onclick="cambiarEstado(@equipo.Id, 'Disponible')">
+                                                                            <i class="bi bi-arrow-clockwise me-2"></i>Reactivar
+                                                                        </a>
+                                                                    </li>
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model != null && Model.Any())
+                {
+                    <div class="card-footer border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Mostrando <span id="filteredCount">@totalEquipos</span> de <span id="totalCount">@totalEquipos</span> equipos
+                            </small>
+                            <div>
+                                <button class="btn btn-success btn-sm me-2" onclick="exportarReporte('Equipos', 'Excel')">
+                                    <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
+                                </button>
+                                <button class="btn btn-danger btn-sm me-2" onclick="exportarReporte('Equipos', 'PDF')">
+                                    <i class="bi bi-file-pdf me-1"></i> Exportar PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cambio de Estado -->
+<div class="modal fade" id="estadoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">Cambiar Estado del Equipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">¿Está seguro de cambiar el estado de este equipo a <strong id="estadoTexto" class="text-white"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formCambiarEstado" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="equipoId" name="id" />
+                    <input type="hidden" id="nuevoEstado" name="estado" />
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Dar de Baja -->
+<div class="modal fade" id="bajaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">Dar de Baja Equipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-white">¿Está seguro de dar de baja el equipo <strong id="equipoSerie" class="text-white"></strong>?</p>
+                <p class="text-danger"><small>Esta acción marcará el equipo como "Dado de Baja" pero no lo eliminará del sistema.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formDarDeBaja" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="bajaEquipoId" name="id" />
+                    <input type="hidden" name="estado" value="DadoDeBaja" />
+                    <button type="submit" class="btn btn-danger">Confirmar Baja</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Variable global para almacenar equipos únicos
+        let uniqueEquipoIds = new Set();
+        let fechaSortAscendente = true; // Controla la dirección del ordenamiento por fecha
+
+        $(document).ready(function() {
+            // Configuración inicial con tooltips para tema oscuro
+            $('[data-bs-toggle="tooltip"]').tooltip({
+                template: '<div class="tooltip" role="tooltip"><div class="tooltip-inner bg-dark"></div><div class="tooltip-arrow"></div></div>'
+            });
+
+            // Inicializar el set de equipos únicos
+            initializeUniqueEquipos();
+
+            // Filtros con botones
+            $('.filter-btn').click(function() {
+                const filterType = $(this).data('filter');
+                const value = $(this).data('value');
+
+                // Actualizar estado activo
+                $(`.filter-btn[data-filter="${filterType}"]`).removeClass('active');
+                $(this).addClass('active');
+
+                aplicarFiltros();
+            });
+
+            // Búsqueda en tiempo real
+            $('#searchInput').on('keyup', aplicarFiltros);
+            $('#clearSearch').click(function() {
+                $('#searchInput').val('');
+                aplicarFiltros();
+            });
+
+            // Ordenamiento
+            $('#sortByEstado').click(function() {
+                ordenarEquipos('estado');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            $('#sortByTipo').click(function() {
+                ordenarEquipos('tipo');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            $('#sortByFecha').click(function() {
+                // Alternar entre ascendente y descendente
+                fechaSortAscendente = !fechaSortAscendente;
+                ordenarEquipos('fecha');
+                $(this).addClass('active').siblings().removeClass('active');
+
+                // Actualizar ícono según la dirección
+                const icon = fechaSortAscendente ? 'bi-sort-numeric-down' : 'bi-sort-numeric-up';
+                $(this).find('i').attr('class', `bi ${icon}`);
+            });
+
+            // Refresh
+            $('#refreshButton').click(function() {
+                $(this).find('i').addClass('spin');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            });
+
+            function initializeUniqueEquipos() {
+                // Solo contar equipos únicos basados en el ID
+                $('.equipo-row, .equipo-card').each(function() {
+                    const equipoId = $(this).data('equipo-id');
+                    if (equipoId) {
+                        uniqueEquipoIds.add(equipoId);
+                    }
+                });
+            }
+
+            function contarEquiposUnicosVisibles() {
+                const visibleIds = new Set();
+
+                // Contar equipos únicos visibles
+                $('.equipo-row:visible, .equipo-card:visible').each(function() {
+                    const equipoId = $(this).data('equipo-id');
+                    if (equipoId) {
+                        visibleIds.add(equipoId);
+                    }
+                });
+
+                return visibleIds.size;
+            }
+
+            function aplicarFiltros() {
+                const searchText = $('#searchInput').val().toLowerCase();
+                const estadoFilter = $('.filter-btn[data-filter="estado"].active').data('value');
+                const tipoFilter = $('.filter-btn[data-filter="tipo"].active').data('value');
+
+                // Aplicar filtros a ambas vistas
+                $('.equipo-row, .equipo-card').each(function() {
+                    const rowText = $(this).data('search');
+                    const estado = $(this).data('estado');
+                    const tipo = $(this).data('tipo');
+
+                    const matchesSearch = !searchText || rowText.includes(searchText);
+                    const matchesEstado = estadoFilter === 'all' || estado === estadoFilter;
+                    const matchesTipo = tipoFilter === 'all' || tipo === tipoFilter;
+
+                    const isVisible = matchesSearch && matchesEstado && matchesTipo;
+                    $(this).toggle(isVisible);
+                });
+
+                // CORREGIDO: Contar equipos únicos visibles
+                const visibleCount = contarEquiposUnicosVisibles();
+                const totalCount = uniqueEquipoIds.size;
+
+                $('#equipoCount').text(visibleCount);
+                $('#filteredCount').text(visibleCount);
+                $('#totalCount').text(totalCount);
+
+                // Mostrar mensaje si no hay resultados
+                if (visibleCount === 0) {
+                    if ($('#noResultsMessage').length === 0) {
+                        $('.table-responsive, #equiposCardView').append(`
+                            <div class="text-center py-5" id="noResultsMessage">
+                                <i class="bi bi-search display-4 text-muted"></i>
+                                <p class="mt-3 text-muted">No se encontraron equipos con los filtros aplicados</p>
+                                <button class="btn btn-outline-primary" onclick="limpiarFiltros()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Limpiar filtros
+                                </button>
+                            </div>
+                        `);
+                    }
+                } else {
+                    $('#noResultsMessage').remove();
+                }
+            }
+
+            function ordenarEquipos(criterio) {
+                const $containerTable = $('#equiposTableView');
+                const $containerCards = $('#equiposCardView');
+
+                const $itemsTable = $('.equipo-row').detach().toArray();
+                const $itemsCards = $('.equipo-card').detach().toArray();
+
+                const sortFunction = (a, b) => {
+                    if (criterio === 'estado') {
+                        const estadoA = $(a).data('estado');
+                        const estadoB = $(b).data('estado');
+                        const valores = { 'Disponible': 1, 'EnUso': 2, 'EnMantenimiento': 3, 'DadoDeBaja': 4 };
+                        return (valores[estadoA] || 5) - (valores[estadoB] || 5);
+                    } else if (criterio === 'tipo') {
+                        const tipoA = $(a).data('tipo');
+                        const tipoB = $(b).data('tipo');
+                        return tipoA.localeCompare(tipoB);
+                    } else if (criterio === 'fecha') {
+                        const fechaA = $(a).data('fecha');
+                        const fechaB = $(b).data('fecha');
+                        // Ordenar por fecha (formato yyyyMMdd)
+                        return fechaSortAscendente ? fechaA - fechaB : fechaB - fechaA;
+                    }
+                    return 0;
+                };
+
+                $itemsTable.sort(sortFunction);
+                $itemsCards.sort(sortFunction);
+
+                $containerTable.append($itemsTable);
+                $containerCards.append($itemsCards);
+                aplicarFiltros();
+            }
+
+            function limpiarFiltros() {
+                $('#searchInput').val('');
+                $('.filter-btn').removeClass('active');
+                $('.filter-btn[data-value="all"]').addClass('active');
+                $('.equipo-row, .equipo-card').show();
+
+                // CORREGIDO: Usar el conteo de equipos únicos
+                const totalCount = uniqueEquipoIds.size;
+                $('#equipoCount').text(totalCount);
+                $('#filteredCount').text(totalCount);
+                $('#totalCount').text(totalCount);
+                $('#noResultsMessage').remove();
+            }
+
+            // Inicializar filtros
+            aplicarFiltros();
+        });
+
+        function cambiarEstado(equipoId, estado) {
+            const estadoText = {
+                'Disponible': 'Disponible',
+                'EnUso': 'En Uso',
+                'EnMantenimiento': 'En Mantenimiento',
+                'DadoDeBaja': 'Dado de Baja'
+            }[estado];
+
+            $('#estadoTexto').text(estadoText);
+            $('#equipoId').val(equipoId);
+            $('#nuevoEstado').val(estado);
+
+            $('#estadoModal').modal('show');
+        }
+
+        function darDeBaja(equipoId, numeroSerie) {
+            $('#equipoSerie').text(numeroSerie);
+            $('#bajaEquipoId').val(equipoId);
+
+            $('#bajaModal').modal('show');
+        }
+
+        // Manejar el envío del formulario de cambio de estado
+        $('#formCambiarEstado').submit(function(e) {
+            e.preventDefault();
+
+            const equipoId = $('#equipoId').val();
+            const estado = $('#nuevoEstado').val();
+
+            cambiarEstadoEquipo(equipoId, estado);
+        });
+
+        // Manejar el envío del formulario de dar de baja
+        $('#formDarDeBaja').submit(function(e) {
+            e.preventDefault();
+
+            const equipoId = $('#bajaEquipoId').val();
+
+            cambiarEstadoEquipo(equipoId, 'DadoDeBaja');
+        });
+
+        // Función para cambiar el estado del equipo
+        async function cambiarEstadoEquipo(equipoId, estado) {
+            try {
+                showLoadingModal('Cambiando estado del equipo...');
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch(`/Admin/CambiarEstadoEquipo?id=${equipoId}&estado=${estado}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    }
+                });
+
+                if (response.ok) {
+                    hideLoadingModal();
+
+                    // Cerrar modales
+                    $('#estadoModal').modal('hide');
+                    $('#bajaModal').modal('hide');
+
+                    // Mostrar mensaje de éxito
+                    showSuccessModal('Estado Actualizado', 'El estado del equipo se actualizó correctamente');
+
+                    // Recargar la página después de un breve delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+
+                } else {
+                    const errorData = await response.json();
+                    hideLoadingModal();
+                    mostrarAlertaModal('danger', errorData.message || 'Error al cambiar el estado');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                hideLoadingModal();
+                mostrarAlertaModal('danger', 'Error de conexión. Intente nuevamente.');
+            }
+        }
+
+        function exportarReporte(reportType, format) {
+            try {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Admin/ExportarReporteSimple';
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token;
+                form.appendChild(tokenInput);
+
+                const typeInput = document.createElement('input');
+                typeInput.type = 'hidden';
+                typeInput.name = 'reportType';
+                typeInput.value = reportType;
+                form.appendChild(typeInput);
+
+                const formatInput = document.createElement('input');
+                formatInput.type = 'hidden';
+                formatInput.name = 'format';
+                formatInput.value = format;
+                form.appendChild(formatInput);
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                mostrarAlertaModal('danger', 'Error al exportar el reporte');
+            }
+        }
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = true) {
+            // Configurar como éxito
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function mostrarAlertaModal(tipo, mensaje, autoClose = true) {
+            // Configurar según el tipo
+            const icon = tipo === 'success' ? 'bi-check-circle-fill' :
+                        tipo === 'warning' ? 'bi-exclamation-triangle-fill' :
+                        'bi-exclamation-triangle-fill';
+
+            const buttonClass = tipo === 'success' ? 'btn-success' :
+                              tipo === 'warning' ? 'btn-warning' : 'btn-danger';
+
+            const iconClass = tipo === 'success' ? 'text-success' :
+                            tipo === 'warning' ? 'text-warning' : 'text-danger';
+
+            $('#successModalIcon').removeClass('text-success text-warning text-danger bi-check-circle-fill bi-exclamation-triangle-fill')
+                                 .addClass(iconClass + ' ' + icon);
+            $('#successModalButton').removeClass('btn-success btn-warning btn-danger').addClass(buttonClass);
+            $('#successModalTitle').text(tipo === 'success' ? '¡Éxito!' :
+                                       tipo === 'warning' ? 'Advertencia' : 'Error');
+            $('#successModalMessage').text(mensaje);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                const duration = tipo === 'success' ? 3000 :
+                               tipo === 'warning' ? 4000 : 5000;
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, duration);
+            }
+        }
+
+        // Función original de showAlert (mantener para compatibilidad)
+        function showAlert(message, type) {
+            mostrarAlertaModal(type, message);
+        }
+
+        function createAlertContainer() {
+            const container = document.createElement('div');
+            container.id = 'alertContainer';
+            container.className = 'container-fluid mb-3';
+            document.querySelector('main .container').prepend(container);
+            return container;
+        }
+    </script>
+
+    <style>
+        .avatar-sm {
+            width: 40px;
+            height: 40px;
+        }
+
+        .equipo-row:hover {
+            background-color: rgba(13, 110, 253, 0.02);
+        }
+
+        .table-warning {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+
+        .badge {
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+
+        .filter-btn.active {
+            font-weight: 600;
+        }
+
+        .stats-card {
+            transition: transform 0.2s ease;
+        }
+
+            .stats-card:hover {
+                transform: translateY(-2px);
+            }
+
+        .spin {
+            animation: spinAnimation 0.5s linear infinite;
+        }
+
+        .tooltip-inner {
+            background-color: #1a1d23 !important;
+            color: #ffffff !important;
+        }
+
+        .tooltip-arrow::before {
+            border-top-color: #1a1d23 !important;
+        }
+
+        .dropdown-menu {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+        }
+
+        .dropdown-item {
+            color: #ffffff;
+        }
+
+            .dropdown-item:hover {
+                background-color: #21262d;
+                color: #ffffff;
+            }
+
+        /* Estilos para los modales de éxito y carga */
+        #successModal .modal-content,
+        #loadingModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        /* Estilos para el modal de carga */
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        @@keyframes spinAnimation {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+}
+
+@functions {
+    string GetEstadoEquipoBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "disponible" => "bg-success",
+            "enuso" => "bg-primary",
+            "en uso" => "bg-primary",
+            "enmantenimiento" => "bg-warning text-dark",
+            "en mantenimiento" => "bg-warning text-dark",
+            "dadodebaja" => "bg-secondary",
+            "dado de baja" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    string GetTipoEquipoBadge(string tipo)
+    {
+        return tipo?.ToLower() switch
+        {
+            "laptop" => "bg-primary bg-opacity-10 text-primary",
+            "desktop" => "bg-info bg-opacity-10 text-info",
+            "servidor" => "bg-purple bg-opacity-10 text-purple",
+            "impresora" => "bg-warning bg-opacity-10 text-warning",
+            "monitor" => "bg-success bg-opacity-10 text-success",
+            "tablet" => "bg-secondary bg-opacity-10 text-secondary",
+            _ => "bg-light bg-opacity-10 text-dark"
+        };
+    }
+
+    string GetIncidentesBadge(int count)
+    {
+        return count switch
+        {
+            0 => "bg-success",
+            < 3 => "bg-warning text-dark",
+            _ => "bg-danger"
+        };
+    }
+
+    string GetAntiguedad(DateTime fechaAdquisicion)
+    {
+        var antiguedad = DateTime.Now.Year - fechaAdquisicion.Year;
+        if (fechaAdquisicion.Date > DateTime.Now.AddYears(-antiguedad))
+            antiguedad--;
+
+        return antiguedad <= 0 ? "Nuevo" : $"{antiguedad} año{(antiguedad > 1 ? "s" : "")}";
+    }
+}

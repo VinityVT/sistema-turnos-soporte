@@ -1,0 +1,9 @@
+BLOQUEAR USUARIO ATTEMPT:
+Timestamp: 2025-11-13 12:01:03.456
+User ID: d1d02785-9952-4500-bbee-d313ec431642
+Action: Bloquear
+Admin User: Administrador
+Remote IP: ::1
+
+SUCCESS:
+Response: {"success":true,"message":"Usuario bloqueado correctamente"}

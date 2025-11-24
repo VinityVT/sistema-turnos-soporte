@@ -1,0 +1,23 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-10-27 09:38:07.502
+Email: it@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0
+Remote IP: ::1
+
+JWT TOKEN DETAILS:
+Issuer: https://localhost:7181
+Valid To: 10/28/2025 4:38:26 AM
+Claims:
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: 2605802c-cb7a-4742-b839-dd0bcdd5326a
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress: it@gmail.com
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: itadori
+EsTecnico: True
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Tecnico
+exp: 1761626306
+iss: https://localhost:7181
+aud: https://localhost:7094
+
+AUTHENTICATION SUCCESSFUL
+Roles assigned: Tecnico
+Auth properties: Microsoft.AspNetCore.Authentication.AuthenticationProperties

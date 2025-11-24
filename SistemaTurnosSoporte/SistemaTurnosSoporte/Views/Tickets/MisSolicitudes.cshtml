@@ -1,0 +1,206 @@
+﻿@using SistemaSoporte.Extensions
+@model List<SIGESTEC.API.DTOs.TicketDTO>
+@{
+    ViewData["Title"] = "Mis Tickets de Soporte";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-list-task text-primary me-2"></i> @ViewData["Title"]</h2>
+        <a asp-controller="Tickets" asp-action="Crear" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Nuevo ticket
+        </a>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h3 class="h6 mb-0">Historial de mis tickets</h3>
+                    <small class="text-muted">
+                        Total: @Model.Count •
+                        <span class="text-success">@Model.Count(t => t.Estado == "Terminado") resueltos</span> •
+                        <span class="text-warning">@Model.Count(t => t.Estado == "En progreso") en proceso</span>
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Buscar en mis tickets..." id="searchInput">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Título y Descripción</th>
+                            <th>Técnico Asignado</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Fecha Creación</th>
+                            <th>Tiempo Resolución</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var ticket in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <strong>#@ticket.Id</strong>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold">@ticket.Titulo</div>
+                                        <small class="text-muted">@ticket.TipoProblema</small>
+                                        <br>
+                                        <small>@ticket.Descripcion.Truncate(50)</small>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(ticket.TecnicoNombre) && ticket.TecnicoNombre != "No asignado")
+                                        {
+                                            <div class="fw-bold">@ticket.TecnicoNombre</div>
+                                            <small class="text-muted">@ticket.TecnicoEspecialidad</small>
+                                            <br>
+                                            <small><i class="bi bi-envelope me-1"></i>@ticket.TecnicoEmail</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Esperando asignación</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetStatusBadge(ticket.Estado)">@ticket.Estado</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                    </td>
+                                    <td>
+                                        <small>@ticket.FechaCreacion.ToString("dd/MM/yyyy")</small>
+                                        <br>
+                                        <small class="text-muted">@ticket.FechaCreacion.ToString("HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        @if (ticket.TiempoResolucion.HasValue)
+                                        {
+                                            <span class="badge bg-success">
+                                                @GetTiempoResolucion(ticket.TiempoResolucion.Value)
+                                            </span>
+                                        }
+                                        else if (ticket.Estado == "En progreso")
+                                        {
+                                            <span class="badge bg-warning text-dark">En proceso</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Pendiente</span>
+                                        }
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                               class="btn btn-outline-primary" title="Ver detalle completo">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            @if (ticket.Estado == "En espera" || ticket.Estado == "En progreso")
+                                            {
+                                                <a asp-controller="Tickets" asp-action="CancelarConfirmacion" asp-route-id="@ticket.Id"
+                                                   class="btn btn-outline-danger" title="Cancelar ticket">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="bi bi-inbox display-4 text-muted"></i>
+                                    <p class="mt-2 text-muted">No tienes tickets registrados</p>
+                                    <a asp-controller="Tickets" asp-action="Crear" class="btn btn-primary mt-2">
+                                        <i class="bi bi-plus-circle me-1"></i> Crear mi primer ticket
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#searchButton').click(function() {
+                const searchText = $('#searchInput').val().toLowerCase();
+                $('table tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(searchText));
+                });
+            });
+
+            $('#searchInput').on('keyup', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('table tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(searchText));
+                });
+            });
+        });
+    </script>
+}
+
+@functions {
+    string GetPriorityBadge(string prioridad)
+    {
+        return prioridad?.ToLower() switch
+        {
+            "alta" => "bg-danger",
+            "media" => "bg-warning text-dark",
+            "baja" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "terminado" => "bg-success",
+            "cancelado" => "bg-secondary",
+            "en progreso" => "bg-primary",
+            "en proceso" => "bg-primary",
+            _ => "bg-warning text-dark"
+        };
+    }
+
+    string GetTiempoResolucion(TimeSpan tiempo)
+    {
+        if (tiempo.TotalDays >= 1)
+        {
+            return $"{(int)tiempo.TotalDays}d {tiempo.Hours}h";
+        }
+        else if (tiempo.TotalHours >= 1)
+        {
+            return $"{(int)tiempo.TotalHours}h {tiempo.Minutes}m";
+        }
+        else
+        {
+            return $"{tiempo.Minutes}m";
+        }
+    }
+}

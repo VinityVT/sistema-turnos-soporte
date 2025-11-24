@@ -1,0 +1,5 @@
+ACCESS DENIED:
+User: Yeison Johan Pacheco Salmeron
+Timestamp: 2025-10-17 11:46:19.516
+Request Path: /Cuenta/AccesoDenegado
+Claims: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier=b9bfcff0-2d36-4318-bd24-0e62a74751db; http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name=Yeison Johan Pacheco Salmeron; http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress=vinityvt893@gmail.com; EsTecnico=False; http://schemas.microsoft.com/ws/2008/06/identity/claims/role=Empleado

@@ -1,0 +1,5 @@
+ACCESS DENIED:
+User: Hatsune Miku
+Timestamp: 2025-10-07 13:41:13.657
+Request Path: /Cuenta/AccesoDenegado
+Claims: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier=993ba8b5-1e79-4f97-8c76-771df8d6a071; http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name=Hatsune Miku; http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress=Miq@gmail.com; EsTecnico=True; http://schemas.microsoft.com/ws/2008/06/identity/claims/role=Tecnico

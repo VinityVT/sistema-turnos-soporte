@@ -1,0 +1,47 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-11-06 13:02:06.804
+Email: coraline@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+Remote IP: ::1
+
+EXCEPTION DETAILS:
+Type: System.ApplicationException
+Message: Error inesperado: Error en la API (InternalServerError): System.ApplicationException: Credenciales inválidas
+   at SIGESTEC.API.Services.AuthService.Login(UsuarioLoginDTO modelo) in C:\Users\oomap\source\repos\SigestecApi\SigestecApi\Services\AuthService.cs:line 119
+   at SigestecApi.Controllers.AuthController.Login(UsuarioLoginDTO modelo) in C:\Users\oomap\source\repos\SigestecApi\SigestecApi\Controllers\AuthController.cs:line 144
+   at lambda_method947(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Program.<>c.<<<Main>$>b__0_11>d.MoveNext() in C:\Users\oomap\source\repos\SigestecApi\SigestecApi\Program.cs:line 216
+--- End of stack trace from previous location ---
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Content-Type: application/json; charset=utf-8
+Host: localhost:44378
+Transfer-Encoding: chunked
+User-Agent: SistemaSoporte-Web
+traceparent: 00-ef6e388a711c936b6d5130f3dd0d47c3-29f57d0ee2af12a4-00
+
+Stack Trace:
+   at SistemaSoporte.Services.ApiService.PostAsync[T](String endpoint, Object data) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Services\ApiService.cs:line 117
+   at SistemaSoporte.Controllers.CuentaController.Login(LoginViewModel model, String returnUrl) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Controllers\CuentaController.cs:line 65
+
+ADDITIONAL CONTEXT:
+Model State: Valid
+Model Errors: 
+Headers: Accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9,es-MX;q=0.8,es;q=0.7; Cache-Control=max-age=0; Connection=close; Content-Length=256; Content-Type=application/x-www-form-urlencoded; Cookie=.AspNetCore.Antiforgery.af_UCMwvaQU=CfDJ8LAPvIF2zklLlwfbH4EDwGL0E0lEXAKJq8GFCWxuGc7XB5U2_iBk6bI3uLx2PkweTC8qkS0ScD64EIqaG-vXfMf5QQcMxlbAVZ0GvP9Tebl2DF-WStLj1Is0iKGwWSFYFYOEffSvJCBrmNASG28A838; Host=localhost:44323; Referer=https://localhost:44323/Cuenta/Login; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0; sec-ch-ua="Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"; sec-ch-ua-mobile=?0; sec-ch-ua-platform="Windows"; origin=https://localhost:44323; upgrade-insecure-requests=1; sec-fetch-site=same-origin; sec-fetch-mode=navigate; sec-fetch-user=?1; sec-fetch-dest=document; priority=u=0, i

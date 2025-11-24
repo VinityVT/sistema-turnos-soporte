@@ -1,0 +1,352 @@
+﻿@using System.Security.Claims
+@inject IHttpContextAccessor HttpContextAccessor
+@inject SistemaSoporte.Services.IApiService ApiService
+
+@{
+    var solicitudesRecientes = new List<SIGESTEC.API.DTOs.TicketDTO>();
+    var isAuthenticated = HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
+    var userName = HttpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name);
+
+    if (isAuthenticated)
+    {
+        try
+        {
+            var userId = HttpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            solicitudesRecientes = await ApiService.GetAsync<List<SIGESTEC.API.DTOs.TicketDTO>>($"api/Tickets/mis-tickets");
+            solicitudesRecientes = solicitudesRecientes?.Take(3).ToList() ?? new List<SIGESTEC.API.DTOs.TicketDTO>();
+        }
+        catch
+        {
+            solicitudesRecientes = new List<SIGESTEC.API.DTOs.TicketDTO>();
+        }
+    }
+}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Sistema de Soporte Técnico</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-headset me-2"></i>
+                    <span>Soporte Técnico</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#navbarNav" aria-controls="navbarNav"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    @if (isAuthenticated)
+                    {
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                    <i class="bi bi-house-door me-1"></i> Inicio
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Tickets" asp-action="MisSolicitudes">
+                                    <i class="bi bi-list-task me-1"></i> Mis Tickets
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Tickets" asp-action="Crear">
+                                    <i class="bi bi-plus-circle me-1"></i> Nuevo Ticket
+                                </a>
+                            </li>
+
+                            <!-- Enlace para Equipos - Solo Técnicos y Administradores -->
+                            @if (HttpContextAccessor.HttpContext?.User.IsInRole("Tecnico") == true ||
+                                                    HttpContextAccessor.HttpContext?.User.IsInRole("Admin") == true)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="Equipos">
+                                        <i class="bi bi-pc me-1"></i> Equipos
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Enlace para Inventario - Solo Técnicos y Administradores -->
+                            @if (HttpContextAccessor.HttpContext?.User.IsInRole("Tecnico") == true ||
+                                                    HttpContextAccessor.HttpContext?.User.IsInRole("Admin") == true)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Admin" asp-action="Inventario">
+                                        <i class="bi bi-box-seam me-1"></i> Inventario
+                                    </a>
+                                </li>
+                            }
+
+                            @if (HttpContextAccessor.HttpContext?.User.IsInRole("Tecnico") == true)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Tecnico" asp-action="Index">
+                                        <i class="bi bi-tools me-1"></i> Panel Técnico
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Menú desplegable de Administración - Solo Admin -->
+                            @if (HttpContextAccessor.HttpContext?.User.IsInRole("Admin") == true)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-speedometer2 me-1"></i> Administración
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="adminDropdown">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                                <i class="bi bi-grid me-2"></i> Dashboard
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Tickets">
+                                                <i class="bi bi-list-check me-2"></i> Todos los Tickets
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="GestionUsuarios">
+                                                <i class="bi bi-people me-2"></i> Gestionar Usuarios
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <div class="ms-lg-3">
+                        @if (isAuthenticated)
+                        {
+                            <div class="dropdown">
+                                <button class="btn user-dropdown-btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle me-2"></i>
+                                    <span class="d-none d-sm-inline">@userName</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Perfil" asp-action="Index">
+                                            <i class="bi bi-person me-2"></i> Mi perfil
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item theme-toggle-btn" type="button" id="themeToggle">
+                                            <i class="bi bi-moon-stars theme-icon me-2"></i> Cambiar tema
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="offcanvas" data-bs-target="#solicitudesOffcanvas">
+                                            <i class="bi bi-list-check me-2"></i> Mis solicitudes activas
+                                            @{
+                                                var solicitudesActivasCount = solicitudesRecientes
+                                                .Where(s => s.Estado?.ToLower() != "cancelado" &&
+                                                s.Estado?.ToLower() != "terminado" &&
+                                                s.Estado?.ToLower() != "resuelto")
+                                                .Count();
+                                            }
+                                            @if (solicitudesActivasCount > 0)
+                                            {
+                                                <span class="badge bg-primary ms-1">@solicitudesActivasCount</span>
+                                            }
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Cuenta" asp-action="Logout" method="post" class="dropdown-item p-0">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-link p-3 text-decoration-none w-100 text-start" style="border-radius: 8px;">
+                                                <i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-controller="Cuenta" asp-action="Login" class="btn user-dropdown-btn">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar sesión
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow-1 py-4">
+        <div class="container">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+
+    @if (isAuthenticated)
+    {
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="solicitudesOffcanvas">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">Mis solicitudes activas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                @{
+                    var solicitudesActivasOffcanvas = solicitudesRecientes
+                    .Where(s => s.Estado?.ToLower() != "cancelado" &&
+                    s.Estado?.ToLower() != "terminado" &&
+                    s.Estado?.ToLower() != "resuelto")
+                    .ToList();
+                }
+
+                @if (solicitudesActivasOffcanvas.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var solicitud in solicitudesActivasOffcanvas)
+                        {
+                            <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@solicitud.Id"
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@solicitud.Titulo</h6>
+                                    <small>@solicitud.FechaCreacion.ToString("MM/dd")</small>
+                                </div>
+                                <p class="mb-1 small text-truncate">@solicitud.Descripcion</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">@solicitud.TipoProblema</small>
+                                    <span class="badge @GetStatusBadge(solicitud.Estado)">@solicitud.Estado</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                    <div class="mt-3 text-center">
+                        <a asp-controller="Tickets" asp-action="MisSolicitudes" class="btn btn-outline-primary btn-sm">
+                            Ver todas mis solicitudes
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle display-4"></i>
+                        <p class="mt-2">No tienes solicitudes activas</p>
+                        <a asp-controller="Tickets" asp-action="Crear" class="btn btn-primary btn-sm">
+                            Crear nueva solicitud
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <small>Sistema Interno de Soporte Técnico &copy; @DateTime.Now.Year</small>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <small>
+                        <a href="#" class="text-white text-decoration-none me-2">Términos</a>
+                        <a href="#" class="text-white text-decoration-none me-2">Privacidad</a>
+                        <a href="#" class="text-white text-decoration-none">Contacto</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        toastr.options = {
+            positionClass: "toast-bottom-right",
+            preventDuplicates: true,
+            newestOnTop: false
+        };
+
+        // Agregar clase activa al elemento de navegación actual
+        $(document).ready(function() {
+            var currentUrl = window.location.pathname;
+            $('.nav-link').each(function() {
+                var linkUrl = $(this).attr('href');
+                if (currentUrl === linkUrl || currentUrl.startsWith(linkUrl + '/')) {
+                    $(this).addClass('active');
+                    $(this).closest('.nav-item').addClass('active');
+                }
+            });
+
+            // Manejar el cambio de tema
+            $('#themeToggle').click(function() {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                html.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+
+                // Actualizar ícono
+                const icon = $(this).find('.theme-icon');
+                if (newTheme === 'dark') {
+                    icon.removeClass('bi-sun').addClass('bi-moon-stars');
+                } else {
+                    icon.removeClass('bi-moon-stars').addClass('bi-sun');
+                }
+            });
+
+            // Cargar tema guardado
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+
+            // Actualizar ícono según el tema
+            const themeIcon = $('#themeToggle .theme-icon');
+            if (savedTheme === 'dark') {
+                themeIcon.removeClass('bi-sun').addClass('bi-moon-stars');
+            } else {
+                themeIcon.removeClass('bi-moon-stars').addClass('bi-sun');
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+@functions {
+    string GetStatusBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "terminado" => "bg-success",
+            "cancelado" => "bg-secondary",
+            "en progreso" => "bg-primary",
+            "en proceso" => "bg-primary",
+            "asignado" => "bg-info",
+            _ => "bg-warning text-dark"
+        };
+    }
+}

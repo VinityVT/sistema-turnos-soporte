@@ -1,0 +1,18 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-09-12 11:59:42.608
+Email: NSubaru123@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0
+Remote IP: ::1
+
+EXCEPTION DETAILS:
+Type: System.ApplicationException
+Message: Error en la API: InternalServerError
+Stack Trace:
+   at SistemaSoporte.Services.ApiService.PostAsync[T](String endpoint, Object data) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Services\ApiService.cs:line 88
+   at SistemaSoporte.Controllers.CuentaController.Login(LoginViewModel model, String returnUrl) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Controllers\CuentaController.cs:line 65
+
+ADDITIONAL CONTEXT:
+Model State: Valid
+Model Errors: 
+Headers: Accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9,es-MX;q=0.8,es;q=0.7; Cache-Control=max-age=0; Connection=close; Content-Length=260; Content-Type=application/x-www-form-urlencoded; Cookie=.AspNetCore.Antiforgery.af_UCMwvaQU=CfDJ8ATf6FaTfKNEoWsXrC15azboJ2VYKuOYa-UDz7-SWj57g9se7ColN6J7aTFGDaj6UEcbwv8PIol2NkzalR4RiqxzsM_8AHjrA7vjwb3nWrJGmL_BWzeybmLgTGdRHA9MJpZglvFznPzQ6Iculkj0XD4; Host=localhost:44323; Referer=https://localhost:44323/Cuenta/Login; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0; sec-ch-ua="Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"; sec-ch-ua-mobile=?0; sec-ch-ua-platform="Windows"; origin=https://localhost:44323; upgrade-insecure-requests=1; sec-fetch-site=same-origin; sec-fetch-mode=navigate; sec-fetch-user=?1; sec-fetch-dest=document; priority=u=0, i

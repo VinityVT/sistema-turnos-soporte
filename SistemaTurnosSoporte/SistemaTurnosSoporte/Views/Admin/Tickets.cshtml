@@ -1,0 +1,963 @@
+﻿@using SistemaSoporte.Extensions
+@model List<SIGESTEC.API.DTOs.TicketDTO>
+@{
+    ViewData["Title"] = "Gestión de Tickets - Administración";
+    // Calcular los conteos correctamente UNA SOLA VEZ
+    var totalTickets = Model?.Count ?? 0;
+    var pendientes = Model?.Count(t => t.Estado == "En espera") ?? 0;
+    var enProceso = Model?.Count(t => t.Estado == "En progreso") ?? 0;
+    var resueltos = Model?.Count(t => t.Estado == "Terminado") ?? 0;
+    var cancelados = Model?.Count(t => t.Estado == "Cancelado") ?? 0;
+
+    var altaPrioridad = Model?.Count(t => t.Prioridad == "Alta") ?? 0;
+    var mediaPrioridad = Model?.Count(t => t.Prioridad == "Media") ?? 0;
+    var bajaPrioridad = Model?.Count(t => t.Prioridad == "Baja") ?? 0;
+
+    var sinAsignar = Model?.Count(t => string.IsNullOrEmpty(t.TecnicoNombre) || t.TecnicoNombre == "No asignado") ?? 0;
+    var asignados = Model?.Count(t => !string.IsNullOrEmpty(t.TecnicoNombre) && t.TecnicoNombre != "No asignado") ?? 0;
+}
+
+<div class="container-fluid">
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                <i class="bi bi-ticket-detailed text-primary me-2"></i> @ViewData["Title"]
+            </h1>
+            <p class="text-muted mb-0">Gestión centralizada de todos los tickets del sistema</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-download me-1"></i> Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="exportarReporte('Tickets', 'Excel')">
+                            <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="exportarReporte('Tickets', 'PDF')">
+                            <i class="bi bi-file-pdf text-danger me-2"></i>PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Barra Lateral de Filtros -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>Filtrar Tickets
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Búsqueda -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Buscar</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="ID, título, usuario..." id="searchInput">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Estado -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Estado</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="estado" data-value="all">
+                                Todos (@totalTickets)
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="estado" data-value="En espera">
+                                Pendientes (@pendientes)
+                            </button>
+                            <button class="btn btn-sm btn-outline-info filter-btn" data-filter="estado" data-value="En progreso">
+                                En Proceso (@enProceso)
+                            </button>
+                            <button class="btn btn-sm btn-outline-success filter-btn" data-filter="estado" data-value="Terminado">
+                                Resueltos (@resueltos)
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary filter-btn" data-filter="estado" data-value="Cancelado">
+                                Cancelados (@cancelados)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Prioridad -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Prioridad</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="prioridad" data-value="all">
+                                Todas
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="prioridad" data-value="Alta">
+                                Alta (@altaPrioridad)
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="prioridad" data-value="Media">
+                                Media (@mediaPrioridad)
+                            </button>
+                            <button class="btn btn-sm btn-outline-success filter-btn" data-filter="prioridad" data-value="Baja">
+                                Baja (@bajaPrioridad)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Tipo -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tipo de Problema</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="tipo" data-value="all">
+                                Todos
+                            </button>
+                            @foreach (var tipo in Model.Select(t => t.TipoProblema).Distinct().OrderBy(t => t))
+                            {
+                                <button class="btn btn-sm btn-outline-secondary filter-btn" data-filter="tipo" data-value="@tipo">
+                                    @tipo (@Model.Count(t => t.TipoProblema == tipo))
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Asignación -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Asignación</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="asignacion" data-value="all">
+                                Todos
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="asignacion" data-value="sin-asignar">
+                                Sin Asignar (@sinAsignar)
+                            </button>
+                            <button class="btn btn-sm btn-outline-info filter-btn" data-filter="asignacion" data-value="asignados">
+                                Asignados (@asignados)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Acciones Rápidas -->
+                    <div class="mt-4 pt-3 border-top">
+                        <label class="form-label small fw-bold">Acciones Rápidas</label>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-outline-primary" id="refreshButton">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar Lista
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" id="resetFilters">
+                                <i class="bi bi-x-circle me-1"></i>Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Principal de Tickets -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list-ul me-2"></i>Lista de Tickets
+                                <span class="badge bg-primary ms-2" id="ticketCount">@totalTickets</span>
+                            </h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="sortByDate">
+                                    <i class="bi bi-sort-numeric-down"></i> Más Recientes
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="sortByPriority">
+                                    <i class="bi bi-exclamation-triangle"></i> Prioridad
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <!-- Estado Vacío -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-ticket display-1 text-muted opacity-25"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No hay tickets registrados</h5>
+                            <p class="text-muted mb-4">Los tickets creados por los usuarios aparecerán aquí</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Vista de Tarjetas (Mobile) -->
+                        <div class="d-lg-none">
+                            <div class="row g-3 p-3" id="ticketsCardView">
+                                @foreach (var ticket in Model.OrderByDescending(t => t.FechaCreacion))
+                                {
+                                    <div class="col-12 ticket-card"
+                                         data-estado="@ticket.Estado"
+                                         data-prioridad="@ticket.Prioridad"
+                                         data-tipo="@ticket.TipoProblema"
+                                         data-asignacion="@(string.IsNullOrEmpty(ticket.TecnicoNombre) || ticket.TecnicoNombre == "No asignado" ? "sin-asignar" : "asignados")"
+                                         data-search="@($"{ticket.Id} {ticket.Titulo} {ticket.Descripcion} {ticket.UsuarioNombre} {ticket.TecnicoNombre}".ToLower())"
+                                         data-fecha="@ticket.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"
+                                         data-ticket-id="@ticket.Id">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body">
+                                                <!-- Header de la Tarjeta -->
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-ticket-detailed text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0 fw-bold">Ticket #@ticket.Id</h6>
+                                                            <small class="text-muted">@ticket.Titulo</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Información del Ticket -->
+                                                <div class="mb-3">
+                                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                                        <span class="badge @GetStatusBadge(ticket.Estado)">@ticket.Estado</span>
+                                                        <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                                        <span class="badge bg-secondary">@ticket.TipoProblema</span>
+                                                    </div>
+                                                    <p class="small text-muted mb-2">@ticket.Descripcion.Truncate(100)</p>
+                                                    <div class="d-flex justify-content-between small text-muted">
+                                                        <span><i class="bi bi-person me-1"></i>@ticket.UsuarioNombre</span>
+                                                        <span><i class="bi bi-calendar me-1"></i>@ticket.FechaCreacion.ToString("dd/MM/yy")</span>
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(ticket.TecnicoNombre) && ticket.TecnicoNombre != "No asignado")
+                                                    {
+                                                        <div class="mt-2">
+                                                            <small class="text-info">
+                                                                <i class="bi bi-tools me-1"></i>Asignado a: @ticket.TecnicoNombre
+                                                            </small>
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                <!-- Acciones -->
+                                                <div class="d-grid gap-2">
+                                                    <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-eye me-1"></i>Ver Detalles
+                                                    </a>
+                                                    <div class="btn-group w-100" role="group">
+                                                        @if (ticket.Estado == "En espera")
+                                                        {
+                                                            <button class="btn btn-outline-warning btn-sm"
+                                                                    onclick="asignarTecnicoAdmin(@ticket.Id)"
+                                                                    data-bs-toggle="tooltip"
+                                                                    title="Asignar técnico">
+                                                                <i class="bi bi-person-plus"></i>
+                                                            </button>
+                                                        }
+                                                        <button class="btn btn-outline-info btn-sm"
+                                                                onclick="verHistorial(@ticket.Id)"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Ver historial">
+                                                            <i class="bi bi-clock-history"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Vista de Tabla (Desktop) -->
+                        <div class="d-none d-lg-block">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Ticket</th>
+                                            <th>Información</th>
+                                            <th>Usuario</th>
+                                            <th>Técnico</th>
+                                            <th>Estado</th>
+                                            <th>Fecha</th>
+                                            <th class="text-end pe-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ticketsTableView">
+                                        @foreach (var ticket in Model.OrderByDescending(t => t.FechaCreacion))
+                                        {
+                                            <tr class="ticket-row"
+                                                data-estado="@ticket.Estado"
+                                                data-prioridad="@ticket.Prioridad"
+                                                data-tipo="@ticket.TipoProblema"
+                                                data-asignacion="@(string.IsNullOrEmpty(ticket.TecnicoNombre) || ticket.TecnicoNombre == "No asignado" ? "sin-asignar" : "asignados")"
+                                                data-search="@($"{ticket.Id} {ticket.Titulo} {ticket.Descripcion} {ticket.UsuarioNombre} {ticket.TecnicoNombre}".ToLower())"
+                                                data-fecha="@ticket.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"
+                                                data-ticket-id="@ticket.Id">
+                                                <td class="ps-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-ticket-detailed text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">#@ticket.Id</div>
+                                                            <small class="text-muted">@ticket.TipoProblema</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold mb-1">@ticket.Titulo</div>
+                                                    <small class="text-muted">@ticket.Descripcion.Truncate(80)</small>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">@ticket.UsuarioNombre</div>
+                                                    <small class="text-muted">@ticket.UsuarioEmail</small>
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(ticket.TecnicoNombre) && ticket.TecnicoNombre != "No asignado")
+                                                    {
+                                                        <div class="fw-bold">@ticket.TecnicoNombre</div>
+                                                        <small class="text-muted">@ticket.TecnicoEspecialidad</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Sin asignar</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="badge @GetStatusBadge(ticket.Estado) mb-1">@ticket.Estado</span>
+                                                    <br>
+                                                    <span class="badge @GetPriorityBadge(ticket.Prioridad)">@ticket.Prioridad</span>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">@ticket.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-clock me-1"></i>@ticket.FechaCreacion.ToString("HH:mm")
+                                                    </small>
+                                                    @if (ticket.TiempoResolucion.HasValue)
+                                                    {
+                                                        <br>
+                                                        <small class="text-success">@GetTiempoResolucion(ticket.TiempoResolucion.Value)</small>
+                                                    }
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@ticket.Id"
+                                                           class="btn btn-outline-primary"
+                                                           data-bs-toggle="tooltip"
+                                                           title="Ver detalles">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        @if (ticket.Estado == "En espera")
+                                                        {
+                                                            <button class="btn btn-outline-warning"
+                                                                    onclick="asignarTecnicoAdmin(@ticket.Id)"
+                                                                    data-bs-toggle="tooltip"
+                                                                    title="Asignar técnico">
+                                                                <i class="bi bi-person-plus"></i>
+                                                            </button>
+                                                        }
+                                                        <button class="btn btn-outline-info"
+                                                                onclick="verHistorial(@ticket.Id)"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Ver historial">
+                                                            <i class="bi bi-clock-history"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model != null && Model.Any())
+                {
+                    <div class="card-footer bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Mostrando <span id="filteredCount">@totalTickets</span> de <span id="totalCount">@totalTickets</span> tickets
+                            </small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Asignar Técnico (Admin) -->
+<div class="modal fade" id="asignarTecnicoModal" tabindex="-1" aria-labelledby="asignarTecnicoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="asignarTecnicoModalLabel">Asignar Técnico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ticketIdAsignar">
+                <div class="mb-3">
+                    <label for="tecnicoSelect" class="form-label fw-bold">Seleccionar Técnico *</label>
+                    <select id="tecnicoSelect" class="form-select" required>
+                        <option value="">Cargando técnicos...</option>
+                    </select>
+                    <div class="form-text">Seleccione el técnico al que desea asignar este ticket.</div>
+                </div>
+                <div id="ticketInfo" class="alert alert-info">
+                    <!-- Información del ticket se mostrará aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmarAsignacion">
+                    <i class="bi bi-check-circle me-1"></i> Confirmar Asignación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Variable global para controlar el criterio de ordenamiento actual
+        let currentSortCriteria = 'fecha';
+        // Variable global para almacenar tickets únicos
+        let uniqueTicketIds = new Set();
+
+        $(document).ready(function() {
+            // Configuración inicial con tooltips para tema oscuro
+            $('[data-bs-toggle="tooltip"]').tooltip({
+                template: '<div class="tooltip" role="tooltip"><div class="tooltip-inner"></div><div class="tooltip-arrow"></div></div>'
+            });
+
+            // Inicializar el set de tickets únicos
+            initializeUniqueTickets();
+
+            // Filtros con botones
+            $('.filter-btn').click(function() {
+                const filterType = $(this).data('filter');
+                const value = $(this).data('value');
+
+                // Actualizar estado activo
+                $(`.filter-btn[data-filter="${filterType}"]`).removeClass('active');
+                $(this).addClass('active');
+
+                aplicarFiltros();
+            });
+
+            // Búsqueda en tiempo real
+            $('#searchInput').on('keyup', aplicarFiltros);
+            $('#clearSearch').click(function() {
+                $('#searchInput').val('');
+                aplicarFiltros();
+            });
+
+            // Ordenamiento
+            $('#sortByDate').click(function() {
+                currentSortCriteria = 'fecha';
+                ordenarTickets(currentSortCriteria);
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            $('#sortByPriority').click(function() {
+                currentSortCriteria = 'prioridad';
+                ordenarTickets(currentSortCriteria);
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            // Refresh
+            $('#refreshButton').click(function() {
+                $(this).find('i').addClass('spin');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            });
+
+            // Reset filters
+            $('#resetFilters').click(limpiarFiltros);
+
+            // Configurar el botón de confirmación de asignación
+            $('#confirmarAsignacion').click(confirmarAsignacionAdmin);
+
+            function initializeUniqueTickets() {
+                // Solo contar tickets únicos basados en el ID
+                $('.ticket-row, .ticket-card').each(function() {
+                    const ticketId = $(this).data('ticket-id');
+                    if (ticketId) {
+                        uniqueTicketIds.add(ticketId);
+                    }
+                });
+            }
+
+            function contarTicketsUnicosVisibles() {
+                const visibleIds = new Set();
+
+                // Contar tickets únicos visibles
+                $('.ticket-row:visible, .ticket-card:visible').each(function() {
+                    const ticketId = $(this).data('ticket-id');
+                    if (ticketId) {
+                        visibleIds.add(ticketId);
+                    }
+                });
+
+                return visibleIds.size;
+            }
+
+            function aplicarFiltros() {
+                const searchText = $('#searchInput').val().toLowerCase();
+                const estadoFilter = $('.filter-btn[data-filter="estado"].active').data('value');
+                const prioridadFilter = $('.filter-btn[data-filter="prioridad"].active').data('value');
+                const tipoFilter = $('.filter-btn[data-filter="tipo"].active').data('value');
+                const asignacionFilter = $('.filter-btn[data-filter="asignacion"].active').data('value');
+
+                // Aplicar filtros a ambas vistas
+                $('.ticket-row, .ticket-card').each(function() {
+                    const rowText = $(this).data('search');
+                    const estado = $(this).data('estado');
+                    const prioridad = $(this).data('prioridad');
+                    const tipo = $(this).data('tipo');
+                    const asignacion = $(this).data('asignacion');
+
+                    const matchesSearch = !searchText || rowText.includes(searchText);
+                    const matchesEstado = estadoFilter === 'all' || estado === estadoFilter;
+                    const matchesPrioridad = prioridadFilter === 'all' || prioridad === prioridadFilter;
+                    const matchesTipo = tipoFilter === 'all' || tipo === tipoFilter;
+                    const matchesAsignacion = asignacionFilter === 'all' || asignacion === asignacionFilter;
+
+                    const isVisible = matchesSearch && matchesEstado && matchesPrioridad && matchesTipo && matchesAsignacion;
+                    $(this).toggle(isVisible);
+                });
+
+                // CORREGIDO: Contar tickets únicos visibles
+                const visibleCount = contarTicketsUnicosVisibles();
+                const totalCount = uniqueTicketIds.size;
+
+                $('#ticketCount').text(visibleCount);
+                $('#filteredCount').text(visibleCount);
+                $('#totalCount').text(totalCount);
+
+                // Re-aplicar ordenamiento después de filtrar
+                ordenarTickets(currentSortCriteria);
+
+                // Mostrar mensaje si no hay resultados
+                if (visibleCount === 0) {
+                    if ($('#noResultsMessage').length === 0) {
+                        $('.table-responsive, #ticketsCardView').append(`
+                            <div class="text-center py-5" id="noResultsMessage">
+                                <i class="bi bi-search display-4 text-muted"></i>
+                                <p class="mt-3 text-muted">No se encontraron tickets con los filtros aplicados</p>
+                                <button class="btn btn-outline-primary" onclick="limpiarFiltros()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Limpiar filtros
+                                </button>
+                            </div>
+                        `);
+                    }
+                } else {
+                    $('#noResultsMessage').remove();
+                }
+            }
+
+            function ordenarTickets(criterio) {
+                const $containerTable = $('#ticketsTableView');
+                const $containerCards = $('#ticketsCardView');
+
+                // Obtener solo los elementos visibles después del filtrado
+                const $visibleRows = $('.ticket-row:visible').detach().toArray();
+                const $visibleCards = $('.ticket-card:visible').detach().toArray();
+
+                const sortFunction = (a, b) => {
+                    if (criterio === 'fecha') {
+                        const fechaA = $(a).data('fecha');
+                        const fechaB = $(b).data('fecha');
+                        return new Date(fechaB) - new Date(fechaA); // Más recientes primero
+                    } else {
+                        const prioridadA = $(a).data('prioridad');
+                        const prioridadB = $(b).data('prioridad');
+                        const valores = { 'Alta': 3, 'Media': 2, 'Baja': 1 };
+                        const valorA = valores[prioridadA] || 0;
+                        const valorB = valores[prioridadB] || 0;
+
+                        if (valorB !== valorA) {
+                            return valorB - valorA; // Prioridad más alta primero
+                        } else {
+                            // Si tienen la misma prioridad, ordenar por fecha (más recientes primero)
+                            const fechaA = $(a).data('fecha');
+                            const fechaB = $(b).data('fecha');
+                            return new Date(fechaB) - new Date(fechaA);
+                        }
+                    }
+                };
+
+                $visibleRows.sort(sortFunction);
+                $visibleCards.sort(sortFunction);
+
+                $containerTable.append($visibleRows);
+                $containerCards.append($visibleCards);
+            }
+
+            function limpiarFiltros() {
+                $('#searchInput').val('');
+                $('.filter-btn').removeClass('active');
+                $('.filter-btn[data-value="all"]').addClass('active');
+                $('.ticket-row, .ticket-card').show();
+
+                // CORREGIDO: Usar el conteo de tickets únicos
+                const totalCount = uniqueTicketIds.size;
+                $('#ticketCount').text(totalCount);
+                $('#filteredCount').text(totalCount);
+                $('#totalCount').text(totalCount);
+                $('#noResultsMessage').remove();
+
+                // Re-aplicar el ordenamiento actual después de limpiar filtros
+                ordenarTickets(currentSortCriteria);
+            }
+
+            // Inicializar filtros
+            aplicarFiltros();
+        });
+
+        // === FUNCIONALIDAD DE ASIGNAR TÉCNICO (ADMIN) ===
+
+        function asignarTecnicoAdmin(ticketId) {
+            $('#ticketIdAsignar').val(ticketId);
+            cargarTecnicosDisponibles();
+            $('#asignarTecnicoModal').modal('show');
+        }
+
+        function cargarTecnicosDisponibles() {
+            showLoadingModal('Cargando técnicos disponibles...');
+
+            $.ajax({
+                url: '@Url.Action("ObtenerTecnicosDisponibles", "Admin")',
+                type: 'GET',
+                success: function(response) {
+                    hideLoadingModal();
+                    if (response.success && response.data) {
+                        const select = $('#tecnicoSelect');
+                        select.empty();
+                        select.append('<option value="">Seleccione un técnico...</option>');
+
+                        response.data.forEach(tecnico => {
+                            select.append(`<option value="${tecnico.id}">${tecnico.nombreCompleto} - ${tecnico.email}</option>`);
+                        });
+
+                        // Actualizar información del ticket
+                        const ticketId = $('#ticketIdAsignar').val();
+                        $('#ticketInfo').html(`
+                            <strong>Ticket #${ticketId}</strong><br>
+                            <small class="text-muted">Seleccione el técnico que se hará cargo de este ticket</small>
+                        `);
+                    } else {
+                        showErrorModal('Error', 'No se pudieron cargar los técnicos disponibles');
+                    }
+                },
+                error: function() {
+                    hideLoadingModal();
+                    showErrorModal('Error', 'Error al cargar los técnicos disponibles');
+                }
+            });
+        }
+
+        function confirmarAsignacionAdmin() {
+            const ticketId = $('#ticketIdAsignar').val();
+            const tecnicoId = $('#tecnicoSelect').val();
+
+            if (!tecnicoId) {
+                showToast('Error', 'Por favor seleccione un técnico', 'error');
+                return;
+            }
+
+            showLoadingModal('Asignando técnico...');
+
+            $.ajax({
+                url: '@Url.Action("AsignarTicket", "Admin")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: parseInt(ticketId),
+                    tecnicoId: tecnicoId
+                }),
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    hideLoadingModal();
+                    if (response.success) {
+                        $('#asignarTecnicoModal').modal('hide');
+                        showSuccessModal('Éxito', 'Técnico asignado correctamente');
+
+                        // Recargar la página después de 2 segundos
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        showErrorModal('Error', response.message || 'Error al asignar el técnico');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    hideLoadingModal();
+                    showErrorModal('Error', 'Error al asignar el técnico: ' + error);
+                }
+            });
+        }
+
+        function verHistorial(ticketId) {
+            // Aquí podrías abrir un modal con el historial del ticket
+            console.log(`Viendo historial del ticket ${ticketId}`);
+            mostrarAlerta('Funcionalidad de historial en desarrollo', 'info');
+        }
+
+        function exportarReporte(reportType, format) {
+            try {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Admin/ExportarReporteSimple';
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token;
+                form.appendChild(tokenInput);
+
+                const typeInput = document.createElement('input');
+                typeInput.type = 'hidden';
+                typeInput.name = 'reportType';
+                typeInput.value = reportType;
+                form.appendChild(typeInput);
+
+                const formatInput = document.createElement('input');
+                formatInput.type = 'hidden';
+                formatInput.name = 'format';
+                formatInput.value = format;
+                form.appendChild(formatInput);
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                mostrarAlerta('Error al exportar el reporte', 'danger');
+            }
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            // Crear y mostrar una alerta de Bootstrap
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = false) {
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function showErrorModal(title, message, autoClose = true) {
+            $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-danger bi-exclamation-triangle-fill');
+            $('#successModalButton').removeClass('btn-success btn-warning').addClass('btn-danger');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 4000);
+            }
+        }
+
+        function showToast(title, message, type) {
+            // Usar Toastr o el sistema de alertas que tengas
+            if (type === 'success') {
+                toastr.success(message, title);
+            } else {
+                toastr.error(message, title);
+            }
+        }
+    </script>
+
+    <style>
+        .avatar-sm {
+            width: 40px;
+            height: 40px;
+        }
+
+        .ticket-row:hover {
+            background-color: rgba(13, 110, 253, 0.02);
+        }
+
+        .table-warning {
+            background-color: transparent !important;
+        }
+
+        .ticket-row {
+            border-left: none !important;
+        }
+
+        .badge {
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+
+        .filter-btn.active {
+            font-weight: 600;
+        }
+
+        .spin {
+            animation: spinAnimation 0.5s linear infinite;
+        }
+
+        /* Tooltips para tema oscuro */
+        [data-bs-theme="dark"] .tooltip .tooltip-inner {
+            background-color: #1a1d23 !important;
+            color: #ffffff !important;
+            border: 1px solid #30363d;
+        }
+
+        [data-bs-theme="dark"] .tooltip .tooltip-arrow::before {
+            border-top-color: #1a1d23 !important;
+        }
+
+        .alert {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        @@keyframes spinAnimation {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+}
+
+@functions {
+    string GetPriorityBadge(string prioridad)
+    {
+        return prioridad?.ToLower() switch
+        {
+            "alta" => "bg-danger",
+            "media" => "bg-warning text-dark",
+            "baja" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetStatusBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "terminado" => "bg-success",
+            "cancelado" => "bg-secondary",
+            "en progreso" => "bg-primary",
+            "en proceso" => "bg-primary",
+            "asignado" => "bg-info",
+            _ => "bg-warning text-dark"
+        };
+    }
+
+    string GetTiempoResolucion(TimeSpan tiempo)
+    {
+        if (tiempo.TotalDays >= 1)
+        {
+            return $"{(int)tiempo.TotalDays}d {tiempo.Hours}h";
+        }
+        else if (tiempo.TotalHours >= 1)
+        {
+            return $"{(int)tiempo.TotalHours}h {tiempo.Minutes}m";
+        }
+        else
+        {
+            return $"{tiempo.Minutes}m";
+        }
+    }
+}

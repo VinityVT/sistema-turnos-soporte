@@ -1,0 +1,9 @@
+BLOQUEAR USUARIO ATTEMPT:
+Timestamp: 2025-10-30 11:05:30.057
+User ID: 997d4620-b66b-42e1-a217-d22dd10fa876
+Action: Bloquear
+Admin User: Administrador
+Remote IP: ::1
+
+SUCCESS:
+Response: {"success":true,"message":"Usuario bloqueado correctamente"}

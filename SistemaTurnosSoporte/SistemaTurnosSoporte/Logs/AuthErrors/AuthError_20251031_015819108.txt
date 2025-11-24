@@ -1,0 +1,23 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-10-31 01:58:19.109
+Email: wun@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+Remote IP: ::1
+
+JWT TOKEN DETAILS:
+Issuer: https://localhost:7181
+Valid To: 31/10/2025 08:58:19 p. m.
+Claims:
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: f70cd5c6-e130-4a8e-8711-62c1129c7216
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress: wun@gmail.com
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: Wuns
+EsTecnico: True
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Tecnico
+exp: 1761944299
+iss: https://localhost:7181
+aud: https://localhost:7094
+
+AUTHENTICATION SUCCESSFUL
+Roles assigned: Tecnico
+Auth properties: Microsoft.AspNetCore.Authentication.AuthenticationProperties

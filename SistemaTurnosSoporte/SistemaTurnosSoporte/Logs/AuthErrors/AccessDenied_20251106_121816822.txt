@@ -1,0 +1,5 @@
+ACCESS DENIED:
+User: Raquel
+Timestamp: 2025-11-06 12:18:16.822
+Request Path: /Cuenta/AccesoDenegado
+Claims: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier=d0a016b9-2d52-48e6-a510-b146e5434405; http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name=Raquel; http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress=Haru@gmail.com; EsTecnico=True; http://schemas.microsoft.com/ws/2008/06/identity/claims/role=Tecnico

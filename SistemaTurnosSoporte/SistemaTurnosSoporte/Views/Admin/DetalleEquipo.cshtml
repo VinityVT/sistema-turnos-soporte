@@ -1,0 +1,820 @@
+﻿@model SIGESTEC.API.DTOs.EquipoDTO
+@{
+    ViewData["Title"] = $"Detalle del Equipo #{Model.Id}";
+    var historialIncidentes = ViewBag.HistorialIncidentes as List<SIGESTEC.API.DTOs.HistorialIncidenteDTO> ?? new List<SIGESTEC.API.DTOs.HistorialIncidenteDTO>();
+    var incidentesNoRevisados = historialIncidentes.Count(i => !i.Revisado);
+}
+
+<div class="container-fluid">
+    <!-- Encabezado mejorado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="bi bi-pc-display-horizontal text-primary fs-2"></i>
+            </div>
+            <div>
+                <h2 class="mb-0">@Model.NumeroSerie</h2>
+                <p class="text-muted mb-0">Detalles del equipo #@Model.Id</p>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Admin" asp-action="Equipos" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Volver
+            </a>
+            <a asp-controller="Admin" asp-action="AgregarIncidente" asp-route-id="@Model.Id"
+               class="btn btn-primary me-2">
+                <i class="bi bi-plus-circle me-1"></i> Agregar Incidente
+            </a>
+            <a asp-controller="Admin" asp-action="EditarEquipo" asp-route-id="@Model.Id"
+               class="btn btn-warning">
+                <i class="bi bi-pencil me-1"></i> Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Tarjeta de estado destacado -->
+    <div class="card bg-light border-0 mb-4">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge @GetEstadoEquipoBadge(Model.Estado) fs-6 p-2">
+                                <i class="bi bi-circle-fill me-1"></i> @Model.Estado
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-muted me-2">Modelo:</span>
+                            <strong>@Model.Modelo</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Adquirido el @Model.FechaAdquisicion.ToString("dd/MM/yyyy")
+                        • @((DateTime.Now - Model.FechaAdquisicion).Days / 365) años de antigüedad
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel Principal -->
+        <div class="col-lg-8">
+            <!-- Información del Equipo -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        <h3 class="h6 mb-0">Información del Equipo</h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-upc-scan text-muted me-2"></i>
+                                <label class="form-label text-muted small mb-0">Número de Serie</label>
+                            </div>
+                            <p class="fw-bold fs-6">@Model.NumeroSerie</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-tag text-muted me-2"></i>
+                                <label class="form-label text-muted small mb-0">Tipo</label>
+                            </div>
+                            <p><span class="badge @GetTipoEquipoBadge(Model.Tipo)">@Model.Tipo</span></p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-laptop text-muted me-2"></i>
+                                <label class="form-label text-muted small mb-0">Modelo</label>
+                            </div>
+                            <p class="fw-bold">@Model.Modelo</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <label class="form-label text-muted small mb-0">Marca</label>
+                            </div>
+                            <p class="fw-bold">@Model.Marca</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-calendar-check text-muted me-2"></i>
+                                <label class="form-label text-muted small mb-0">Fecha Adquisición</label>
+                            </div>
+                            <p class="fw-bold">@Model.FechaAdquisicion.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Descripcion))
+                    {
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-card-text text-muted me-2"></i>
+                                <label class="form-label text-muted small mb-0">Descripción</label>
+                            </div>
+                            <div class="border rounded p-3 bg-light">
+                                <p class="mb-0">@Model.Descripcion</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Componentes -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-motherboard text-primary me-2"></i>
+                            <h3 class="h6 mb-0">Componentes del Equipo</h3>
+                        </div>
+                        <span class="badge bg-primary">@Model.Componentes.Count</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Componentes.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Componente</th>
+                                        <th>N° Serie</th>
+                                        <th>Modelo</th>
+                                        <th>Estado</th>
+                                        <th width="90">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var componente in Model.Componentes)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-cpu text-muted me-2"></i>
+                                                    <div>
+                                                        <div class="fw-bold">@componente.Nombre</div>
+                                                        <small class="text-muted">@(componente.Marca ?? "Sin marca")</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@(componente.NumeroSerie ?? "N/A")</td>
+                                            <td>@(componente.Modelo ?? "N/A")</td>
+                                            <td>
+                                                <span class="badge @GetEstadoComponenteBadge(componente.Estado)">
+                                                    @componente.Estado
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                        onclick="editarComponente(@componente.Id)"
+                                                        title="Editar componente"
+                                                        data-bs-toggle="tooltip">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-cpu display-4 text-muted mb-3"></i>
+                            <p class="text-muted">No hay componentes registrados para este equipo.</p>
+                            <button class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-plus-circle me-1"></i> Agregar Componente
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral -->
+        <div class="col-lg-4">
+            <!-- Tarjeta de Resumen -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-graph-up text-primary me-2"></i>
+                        <h3 class="h6 mb-0">Resumen</h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="p-3 rounded bg-primary bg-opacity-10">
+                                <i class="bi bi-motherboard text-primary fs-4 mb-2"></i>
+                                <div class="text-muted small">Componentes</div>
+                                <div class="h4 text-primary fw-bold">@Model.Componentes.Count</div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 rounded bg-warning bg-opacity-10">
+                                <i class="bi bi-exclamation-triangle text-warning fs-4 mb-2"></i>
+                                <div class="text-muted small">Incidentes</div>
+                                <div class="h4 text-warning fw-bold">@historialIncidentes.Count</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Indicadores de Estado -->
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Estado del equipo:</span>
+                            <span class="fw-bold">@Model.Estado</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar @GetEstadoEquipoBadge(Model.Estado)"
+                                 style="width: 100%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Incidentes pendientes:</span>
+                            <span class="fw-bold text-danger">@incidentesNoRevisados</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Antigüedad:</span>
+                            <span class="fw-bold">@((DateTime.Now - Model.FechaAdquisicion).Days / 365) años</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incidentes Recientes -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock-history text-primary me-2"></i>
+                            <h3 class="h6 mb-0">Incidentes Recientes</h3>
+                        </div>
+                        <div>
+                            <span class="badge bg-warning" title="Incidentes pendientes">@incidentesNoRevisados</span>
+                            <span class="badge bg-primary">@historialIncidentes.Count</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (historialIncidentes.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var incidente in historialIncidentes.Take(5))
+                            {
+                                <a href="#" class="list-group-item list-group-item-action border-0 py-3"
+                                   onclick="verDetalleIncidente(@incidente.Id)">
+                                    <div class="d-flex w-100 justify-content-between align-items-start mb-1">
+                                        <h6 class="mb-0">
+                                            @incidente.Tipo
+                                            @if (incidente.Revisado)
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success ms-1" title="Revisado"></i>
+                                            }
+                                        </h6>
+                                        <small class="text-muted">@incidente.Fecha.ToString("MM/dd")</small>
+                                    </div>
+                                    <p class="mb-1 small text-muted text-truncate">@incidente.Descripcion</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="badge @GetPrioridadBadge(incidente.Prioridad)">@incidente.Prioridad</span>
+                                        <span class="badge @GetEstadoIncidenteBadge(incidente.Estado)">@incidente.Estado</span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                        @if (historialIncidentes.Count > 5)
+                        {
+                            <div class="text-center p-3 border-top">
+                                <a href="#historialCompleto" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-list-ul me-1"></i> Ver todos (@historialIncidentes.Count)
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-check-circle display-4 text-muted mb-3"></i>
+                            <p class="text-muted">No hay incidentes registrados.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial Completo de Incidentes -->
+    <div class="card shadow-sm border-0 mt-4" id="historialCompleto">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-list-check text-primary me-2"></i>
+                    <h3 class="h6 mb-0">Historial Completo de Incidentes</h3>
+                </div>
+                <div>
+                    <span class="badge bg-warning me-2" title="Incidentes pendientes de revisión">@incidentesNoRevisados Pendientes</span>
+                    <span class="badge bg-primary">Total: @historialIncidentes.Count</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (historialIncidentes.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Revisión</th>
+                                <th width="120">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var incidente in historialIncidentes)
+                            {
+                                <tr data-incidente-id="@incidente.Id">
+                                    <td nowrap>
+                                        <div class="fw-bold">@incidente.Fecha.ToString("dd/MM/yyyy")</div>
+                                        <small class="text-muted">@incidente.Fecha.ToString("HH:mm")</small>
+                                    </td>
+                                    <td>@incidente.Tipo</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 200px;"
+                                             data-bs-toggle="tooltip" title="@incidente.Descripcion">
+                                            @incidente.Descripcion
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetPrioridadBadge(incidente.Prioridad)">
+                                            @incidente.Prioridad
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetEstadoIncidenteBadge(incidente.Estado)">
+                                            @incidente.Estado
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (incidente.Revisado)
+                                        {
+                                            <div class="text-center">
+                                                <i class="bi bi-check-circle-fill text-success fs-5" title="Revisado"></i>
+                                                <div class="small text-muted">
+                                                    @incidente.FechaRevision?.ToString("dd/MM/yy")
+                                                </div>
+                                                <div class="small text-muted">
+                                                    @incidente.RevisadoPor
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock me-1"></i>Pendiente
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!incidente.Revisado)
+                                        {
+                                            <button class="btn btn-success btn-sm btn-revisar"
+                                                    onclick="revisarIncidente(@incidente.Id)"
+                                                    title="Marcar como revisado"
+                                                    data-bs-toggle="tooltip">
+                                                <i class="bi bi-check-circle"></i> Revisar
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Revisado
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">
+                                                @incidente.FechaRevision?.ToString("dd/MM/yy HH:mm")
+                                            </small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                    <p class="text-muted">No hay historial de incidentes para este equipo.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Revisar Incidente -->
+<div class="modal fade" id="revisarIncidenteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle me-2"></i>Revisar Incidente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="incidenteIdRevisar">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    ¿Confirmar que este incidente ha sido revisado y atendido?
+                </div>
+                <div class="mb-3">
+                    <label for="comentarioRevision" class="form-label">Comentario de revisión <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="comentarioRevision" rows="3"
+                              placeholder="Agregar comentarios sobre la revisión..." required></textarea>
+                    <div class="form-text">Este comentario quedará registrado en el historial del incidente.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmarRevision()">
+                    <i class="bi bi-check-circle me-1"></i> Confirmar Revisión
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Notificación para Revisión Exitosa -->
+<div class="modal fade" id="notificacionRevisionModal" tabindex="-1" aria-labelledby="notificacionRevisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success display-4"></i>
+                </div>
+                <h5 class="mb-2" id="notificacionTitulo">¡Incidente Revisado!</h5>
+                <p class="text-muted mb-3" id="notificacionMensaje">
+                    El incidente ha sido marcado como revisado correctamente.
+                </p>
+                <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i> Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Error para Revisión -->
+<div class="modal fade" id="errorRevisionModal" tabindex="-1" aria-labelledby="errorRevisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger display-4"></i>
+                </div>
+                <h5 class="mb-2">Error al Revisar</h5>
+                <p class="text-muted mb-3" id="errorMensaje">
+                    No se pudo completar la revisión del incidente.
+                </p>
+                <button type="button" class="btn btn-danger w-100" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-2"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Inicializar tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+
+        function editarComponente(componenteId) {
+            // Implementar edición de componente
+            alert('Editar componente: ' + componenteId);
+        }
+
+        function verDetalleIncidente(incidenteId) {
+            // Implementar vista de detalle de incidente
+            alert('Ver incidente: ' + incidenteId);
+        }
+
+        function revisarIncidente(incidenteId) {
+            $('#incidenteIdRevisar').val(incidenteId);
+            $('#comentarioRevision').val('');
+            $('#revisarIncidenteModal').modal('show');
+        }
+
+        async function confirmarRevision() {
+            const incidenteId = $('#incidenteIdRevisar').val();
+            const comentario = $('#comentarioRevision').val();
+
+            if (!comentario || comentario.trim() === '') {
+                mostrarAlerta('Por favor, ingrese un comentario de revisión', 'warning');
+                $('#comentarioRevision').focus();
+                return;
+            }
+
+            try {
+                const boton = $('#revisarIncidenteModal .btn-success');
+                boton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Procesando...');
+
+                // Obtener el token anti-CSRF
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                console.log('Enviando solicitud para revisar incidente:', incidenteId);
+
+                const response = await fetch(`/Admin/RevisarIncidente?id=${incidenteId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        comentario: comentario.trim()
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('Respuesta recibida:', result);
+
+                if (result.success) {
+                    $('#revisarIncidenteModal').modal('hide');
+
+                    // Mostrar modal de notificación exitosa
+                    mostrarNotificacionExito(result.message || 'Incidente revisado correctamente');
+
+                    // Asegurarse de que tenemos todos los datos necesarios
+                    const nuevoContador = result.incidentesNoRevisados !== undefined ? result.incidentesNoRevisados : 0;
+                    const fechaRevision = result.fechaRevision || new Date().toISOString();
+                    const revisadoPor = result.revisadoPor || 'Administrador';
+
+                    // Actualizar la UI sin recargar
+                    actualizarUIIncidenteRevisado(incidenteId, nuevoContador, fechaRevision, revisadoPor);
+                } else {
+                    $('#revisarIncidenteModal').modal('hide');
+                    mostrarErrorRevision(result.message || 'Error al revisar el incidente');
+                }
+            } catch (error) {
+                console.error('Error completo:', error);
+                $('#revisarIncidenteModal').modal('hide');
+                mostrarErrorRevision('Error de conexión: ' + error.message);
+            } finally {
+                const boton = $('#revisarIncidenteModal .btn-success');
+                boton.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i> Confirmar Revisión');
+            }
+        }
+
+        // Función para mostrar notificación de éxito
+        function mostrarNotificacionExito(mensaje) {
+            $('#notificacionMensaje').text(mensaje);
+            $('#notificacionRevisionModal').modal('show');
+
+            // Auto-cerrar después de 3 segundos
+            setTimeout(() => {
+                if ($('#notificacionRevisionModal').is(':visible')) {
+                    $('#notificacionRevisionModal').modal('hide');
+                }
+            }, 3000);
+        }
+
+        // Función para mostrar error en la revisión
+        function mostrarErrorRevision(mensaje) {
+            $('#errorMensaje').text(mensaje);
+            $('#errorRevisionModal').modal('show');
+        }
+
+        function actualizarUIIncidenteRevisado(incidenteId, nuevoContador, fechaRevision, revisadoPor) {
+            console.log('Actualizando UI para incidente:', incidenteId, 'Nuevo contador:', nuevoContador);
+
+            // 1. Actualizar todos los contadores de incidentes no revisados
+            $('.badge.bg-warning').each(function() {
+                if ($(this).text().includes('Pendientes') || $(this).attr('title') === 'Incidentes pendientes de revisión') {
+                    $(this).text(nuevoContador + ' Pendientes');
+                } else if (!$(this).text().includes('Total')) {
+                    $(this).text(nuevoContador);
+                }
+            });
+
+            // 2. Actualizar la fila de la tabla principal
+            const filaIncidente = $(`tr:has(button[onclick*="revisarIncidente(${incidenteId})"])`);
+
+            if (filaIncidente.length > 0) {
+                // Actualizar columna de acciones
+                filaIncidente.find('td:last').html(`
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>Revisado
+                    </span>
+                    <br>
+                    <small class="text-muted">
+                        ${formatearFecha(fechaRevision)}
+                    </small>
+                `);
+
+                // Actualizar estado del incidente
+                filaIncidente.find('td').eq(4).html('<span class="badge bg-info">Revisado</span>');
+
+                // Actualizar columna de revisión
+                filaIncidente.find('td').eq(5).html(`
+                    <div class="text-center">
+                        <i class="bi bi-check-circle-fill text-success fs-5" title="Revisado"></i>
+                        <div class="small text-muted">
+                            ${formatearFecha(fechaRevision, true)}
+                        </div>
+                        <div class="small text-muted">
+                            ${revisadoPor || 'Administrador'}
+                        </div>
+                    </div>
+                `);
+
+                // Remover el botón de revisar
+                filaIncidente.find(`button[onclick="revisarIncidente(${incidenteId})"]`).remove();
+            }
+
+            // 3. Actualizar lista de incidentes recientes
+            const itemLista = $(`.list-group-item[onclick*="verDetalleIncidente(${incidenteId})"]`);
+            if (itemLista.length > 0) {
+                // Agregar ícono de revisado si no existe
+                if (!itemLista.find('h6').find('.bi-check-circle-fill').length) {
+                    itemLista.find('h6').append('<i class="bi bi-check-circle-fill text-success ms-1" title="Revisado"></i>');
+                }
+
+                // Actualizar badge de estado
+                const estadoBadge = itemLista.find('.badge').last();
+                if (estadoBadge.length) {
+                    estadoBadge.removeClass('bg-warning').addClass('bg-info').text('Revisado');
+                }
+            }
+
+            // 4. Actualizar el resumen en el panel lateral
+            const resumenBadge = $('.card:has(.bi-exclamation-triangle)').find('.badge.bg-warning');
+            if (resumenBadge.length) {
+                resumenBadge.text(nuevoContador);
+            }
+
+            console.log('UI actualizada correctamente');
+        }
+
+        // Función auxiliar para formatear fechas
+        function formatearFecha(fechaString, soloFecha = false) {
+            if (!fechaString) return 'N/A';
+
+            const fecha = new Date(fechaString);
+            if (soloFecha) {
+                return fecha.toLocaleDateString('es-ES');
+            } else {
+                return fecha.toLocaleDateString('es-ES') + ' ' + fecha.toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        // Función para forzar una actualización si es necesario
+        function forzarActualizacionUI() {
+            // Recargar solo la sección del historial después de un breve delay
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            // Remover alertas existentes
+            $('.alert-dismissible').remove();
+
+            const alertHTML = `
+                <div class="alert alert-${tipo} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 9999;" role="alert">
+                    ${mensaje}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            $('body').append(alertHTML);
+
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                $('.alert-dismissible').alert('close');
+            }, 5000);
+        }
+
+        // Función para contar incidentes no revisados
+        async function actualizarContadorIncidentes(equipoId) {
+            try {
+                const response = await fetch(`/api/Equipos/${equipoId}/incidentes-no-revisados`);
+                if (response.ok) {
+                    const count = await response.json();
+                    // Actualizar el contador en la UI
+                    const badgeElement = document.querySelector('.badge.bg-warning');
+                    if (badgeElement) {
+                        badgeElement.textContent = count;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al actualizar contador de incidentes:', error);
+            }
+        }
+
+        // Inicializar cuando se carga la página
+        $(document).ready(function() {
+            // Configurar validación del formulario de revisión
+            $('#comentarioRevision').on('input', function() {
+                const comentario = $(this).val().trim();
+                if (comentario.length > 0) {
+                    $(this).removeClass('is-invalid').addClass('is-valid');
+                } else {
+                    $(this).removeClass('is-valid').addClass('is-invalid');
+                }
+            });
+        });
+    </script>
+}
+
+@functions {
+    string GetEstadoEquipoBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "disponible" => "bg-success",
+            "enuso" or "en uso" => "bg-primary",
+            "enmantenimiento" or "en mantenimiento" => "bg-warning text-dark",
+            "dadodebaja" or "dado de baja" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    string GetTipoEquipoBadge(string tipo)
+    {
+        return tipo?.ToLower() switch
+        {
+            "laptop" => "bg-primary bg-opacity-10 text-primary",
+            "desktop" => "bg-info bg-opacity-10 text-info",
+            "servidor" => "bg-purple bg-opacity-10 text-purple",
+            "impresora" => "bg-warning bg-opacity-10 text-warning",
+            "monitor" => "bg-success bg-opacity-10 text-success",
+            _ => "bg-light bg-opacity-10 text-dark"
+        };
+    }
+
+    string GetEstadoComponenteBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "operativo" => "bg-success",
+            "mantenimiento" => "bg-warning text-dark",
+            "fallando" => "bg-danger",
+            "reemplazado" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    string GetPrioridadBadge(string prioridad)
+    {
+        return prioridad?.ToLower() switch
+        {
+            "alta" => "bg-danger",
+            "media" => "bg-warning text-dark",
+            "baja" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetEstadoIncidenteBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "revisado" => "bg-info",
+            "en proceso" => "bg-primary",
+            "reportado" => "bg-warning text-dark",
+            "cerrado" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+}

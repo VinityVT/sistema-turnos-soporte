@@ -1,0 +1,9 @@
+BLOQUEAR USUARIO ATTEMPT:
+Timestamp: 2025-09-30 09:37:44.763
+User ID: c7044d55-8cd3-4744-ac19-0f301958bd27
+Action: Bloquear
+Admin User: Administrador
+Remote IP: ::1
+
+SUCCESS:
+Response: {"success":true,"message":"Usuario bloqueado correctamente"}

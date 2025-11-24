@@ -1,0 +1,24 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-09-03 12:33:45.870
+Email: admin@sigestec.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0
+Remote IP: ::1
+
+JWT TOKEN DETAILS:
+Issuer: https://localhost:7181
+Valid To: 9/4/2025 7:33:46 AM
+Claims:
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: 997d4620-b66b-42e1-a217-d22dd10fa876
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress: admin@sigestec.com
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: Administrador
+EsTecnico: True
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Tecnico
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Admin
+exp: 1756971226
+iss: https://localhost:7181
+aud: https://localhost:7094
+
+AUTHENTICATION SUCCESSFUL
+Roles assigned: Tecnico, Admin
+Auth properties: Microsoft.AspNetCore.Authentication.AuthenticationProperties

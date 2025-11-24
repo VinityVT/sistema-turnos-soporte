@@ -1,0 +1,9 @@
+BLOQUEAR USUARIO ATTEMPT:
+Timestamp: 2025-11-06 12:44:35.271
+User ID: e9490687-00e9-48d4-b808-9f1cc08543d6
+Action: Bloquear
+Admin User: Administrador
+Remote IP: ::1
+
+SUCCESS:
+Response: {"success":true,"message":"Usuario bloqueado correctamente"}

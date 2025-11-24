@@ -1,0 +1,607 @@
+﻿@{
+    ViewData["Title"] = "Inicio";
+    var solicitudesRecientes = ViewBag.SolicitudesRecientes as List<SIGESTEC.API.DTOs.TicketDTO> ?? new List<SIGESTEC.API.DTOs.TicketDTO>();
+    var telefonoSoporte = ViewBag.TelefonoSoporte ?? "555-123-4567";
+    var esAdministrador = User.IsInRole("Admin") || User.IsInRole("Administrador");
+}
+
+<div class="hero-section text-white py-5 mb-5 rounded-3 shadow">
+    <div class="container py-4">
+        <h1 class="display-5 fw-bold mb-3">
+            <i class="bi bi-headset me-2"></i> Bienvenido al Sistema de Soporte
+        </h1>
+        <p class="lead mb-4">Gestiona tus solicitudes de soporte técnico de manera rápida y eficiente</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a asp-controller="Tickets" asp-action="Crear" class="btn btn-light btn-lg px-4">
+                <i class="bi bi-plus-circle me-2"></i> Nueva solicitud
+            </a>
+            <a asp-controller="Tickets" asp-action="MisSolicitudes" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-list-task me-2"></i> Ver mis solicitudes
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header border-0 py-3">
+                    <h3 class="h5 mb-0 text-white">
+                        <i class="bi bi-clock-history text-primary me-2"></i> Tus solicitudes recientes
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    @if (solicitudesRecientes.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Estado</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var solicitud in solicitudesRecientes)
+                                    {
+                                        <tr>
+                                            <td class="ps-4">@solicitud.FechaCreacion.ToString("yyyy-MM-dd")</td>
+                                            <td><span class="badge @GetTipoBadge(solicitud.TipoProblema)">@solicitud.TipoProblema</span></td>
+                                            <td><span class="badge @GetStatusBadge(solicitud.Estado)">@solicitud.Estado</span></td>
+                                            <td class="text-end pe-4">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a asp-controller="Tickets" asp-action="Detalle" asp-route-id="@solicitud.Id" class="btn btn-outline-primary">
+                                                        <i class="bi bi-eye"></i> Ver
+                                                    </a>
+                                                    @if (solicitud.Estado == "En espera" || solicitud.Estado == "En progreso")
+                                                    {
+                                                        <form asp-controller="Tickets" asp-action="Cancelar" asp-route-id="@solicitud.Id" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('¿Estás seguro de que deseas cancelar este ticket?');">
+                                                                <i class="bi bi-x-circle"></i> Cancelar
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <p class="mt-3 text-muted">No tienes solicitudes recientes</p>
+                            <a asp-controller="Tickets" asp-action="Crear" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i> Crear primera solicitud
+                            </a>
+                        </div>
+                    }
+                </div>
+                @if (solicitudesRecientes.Any())
+                {
+                    <div class="card-footer border-0 py-3 text-center">
+                        <a asp-controller="Tickets" asp-action="MisSolicitudes" class="btn btn-link text-white">
+                            Ver todas mis solicitudes <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header border-0 py-3">
+                    <h3 class="h5 mb-0 text-white">
+                        <i class="bi bi-info-circle text-primary me-2"></i> Información útil
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3 border-0">
+                        <h4 class="alert-heading h6 text-white">
+                            <i class="bi bi-lightbulb me-2"></i> Consejo rápido
+                        </h4>
+                        <p class="small mb-0">Antes de reportar un problema, intenta reiniciar el equipo.</p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-secondary text-start text-white" data-bs-toggle="modal" data-bs-target="#faqModal">
+                            <i class="bi bi-question-circle me-2"></i> Preguntas frecuentes
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary text-start text-white" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="bi bi-telephone me-2"></i> Contactar a soporte
+                            <small class="d-block fw-normal">@telefonoSoporte</small>
+                        </button>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <!-- Botón para administradores: abre modal -->
+                            <button type="button" class="btn btn-outline-secondary text-start text-white" data-bs-toggle="modal" data-bs-target="#manualModal">
+                                <i class="bi bi-journal-bookmark me-2"></i> Manual de usuario
+                                <small class="d-block fw-normal">Administrar y descargar</small>
+                            </button>
+                        }
+                        else
+                        {
+                            <!-- Botón para usuarios/técnicos: descarga directa -->
+                            <a asp-controller="Home" asp-action="DescargarManual" class="btn btn-outline-secondary text-start text-white">
+                                <i class="bi bi-download me-2"></i> Manual de usuario
+                                <small class="d-block fw-normal">Descargar última versión</small>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Preguntas Frecuentes -->
+<div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="faqModalLabel">
+                    <i class="bi bi-question-circle me-2"></i>Preguntas Frecuentes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="accordion" id="faqAccordion">
+                    <!-- Pregunta 1 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false" aria-controls="faq1">
+                                Mi equipo no se conecta a la red
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <strong>Solución:</strong> Verifica que el cable de red esté bien conectado en ambos extremos. Si usas WiFi, asegúrate de estar conectado a la red correcta. Reinicia el router/modem y prueba nuevamente. Si el problema persiste, contacta a soporte.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pregunta 2 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">
+                                No puedo imprimir en la impresora de red
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <strong>Solución:</strong> Verifica que la impresora esté encendida y en línea. Comprueba que estés seleccionando la impresora correcta en el diálogo de impresión. Reinicia el servicio de impresión en tu equipo. Si necesitas reinstalar los controladores, contacta a soporte.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pregunta 3 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">
+                                El escáner no funciona correctamente
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <strong>Solución:</strong> Verifica que el escáner esté encendido y correctamente conectado. Reinicia el equipo y el escáner. Asegúrate de tener instalado el software del escáner. Si el problema continúa, contacta a soporte para verificar los controladores.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pregunta 4 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
+                                Mi equipo está muy lento
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <strong>Solución:</strong> Cierra programas que no estés usando. Reinicia el equipo. Verifica el espacio disponible en el disco duro. Ejecuta el liberador de espacio en disco. Si el problema persiste, contacta a soporte para un análisis más profundo.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pregunta 5 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5" aria-expanded="false" aria-controls="faq5">
+                                No puedo acceder a un programa específico
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <strong>Solución:</strong> Reinicia el programa. Si no funciona, reinicia el equipo. Verifica que tengas los permisos necesarios para usar el programa. Si el problema continúa, contacta a soporte indicando el nombre del programa y el error que aparece.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a asp-controller="Tickets" asp-action="Crear" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Crear ticket de soporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Contactar Soporte -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contactModalLabel">
+                    <i class="bi bi-telephone me-2"></i>Contactar a Soporte Técnico
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="bi bi-telephone-fill text-primary display-4"></i>
+                </div>
+                <h4 class="mb-2">@telefonoSoporte</h4>
+                <span class="badge bg-success mb-3" id="badgePais">
+                    <i class="bi bi-globe me-1"></i>
+                    <span id="textoPais">@DetectarPais(telefonoSoporte)</span>
+                </span>
+                <p class="text-muted mb-4">
+                    Llama a este número para recibir asistencia técnica inmediata.<br>
+                    Horario de atención: Lunes a Viernes 8:00 AM - 6:00 PM
+                </p>
+
+                @if (esAdministrador)
+                {
+                    <div class="border-top pt-3 mt-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-gear me-1"></i>Configuración de Administrador
+                        </h6>
+                        <form id="telefonoForm" method="post" asp-controller="Home" asp-action="ActualizarTelefono">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-2">
+                                <label class="form-label small text-muted">Número de teléfono:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="nuevoTelefono" value="@telefonoSoporte"
+                                           placeholder="Ej: +52 555-123-4567"
+                                           pattern="[\d\s\-\+\(\)]+"
+                                           title="Ingresa el número con lada internacional (ej: +52 555-123-4567)">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg"></i> Actualizar
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Formato automático: +52 XXX-XXX-XXXX (México)<br>
+                                        También acepta: +1 (XXX) XXX-XXXX (USA/Canadá), +34 XXX XXX XXX (España)
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Gestión de Manual de Usuario (Solo Admin) -->
+<div class="modal fade" id="manualModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manualModalLabel">
+                    <i class="bi bi-journal-bookmark me-2"></i>Manual de Usuario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Sección para descargar -->
+                <div class="mb-4">
+                    <h6 class="text-success mb-3">
+                        <i class="bi bi-download me-1"></i>Descargar Manual Actual
+                    </h6>
+                    <p class="text-muted small mb-3">Descarga la última versión del manual de usuario.</p>
+                    <div class="d-grid">
+                        <a asp-controller="Home" asp-action="DescargarManual" class="btn btn-outline-success">
+                            <i class="bi bi-download me-1"></i> Descargar Manual
+                        </a>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Sección para subir nuevo manual -->
+                <div>
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-cloud-upload me-1"></i>Subir Nueva Versión
+                    </h6>
+                    <p class="text-muted small mb-3">Sube una nueva versión del manual en formato PDF.</p>
+
+                    <form id="uploadManualForm" asp-controller="Home" asp-action="SubirManual" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="archivo" class="form-label">Seleccionar archivo PDF</label>
+                            <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf" required>
+                            <div class="form-text">Solo se permiten archivos PDF (máximo 10MB)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="version" class="form-label">Versión</label>
+                            <input type="text" class="form-control" id="version" name="version" placeholder="Ej: 1.2" value="1.0" maxlength="10">
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload me-1"></i> Subir Nueva Versión
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            @{
+                    var solicitudesActivas = solicitudesRecientes
+                            .Where(s => s.Estado?.ToLower() != "cancelado" &&
+                                                  s.Estado?.ToLower() != "terminado" &&
+                                                  s.Estado?.ToLower() != "resuelto")
+                            .ToList();
+
+                    var countActivas = solicitudesActivas.Count;
+            }
+
+            @if (countActivas > 0)
+            {
+                    <text>
+                    setTimeout(function() {
+                        toastr.info('Tienes @countActivas solicitudes recientes activas', 'Solicitudes Activas', {
+                            timeOut: 5000,
+                            closeButton: true,
+                            progressBar: true,
+                            onclick: function() {
+                                var offcanvas = new bootstrap.Offcanvas(document.getElementById('solicitudesOffcanvas'));
+                                offcanvas.show();
+                            }
+                        });
+                    }, 1000);
+                    </text>
+            }
+
+            // Función para detectar el país del número de teléfono
+            function detectarPais(telefono) {
+                if (!telefono) return 'Desconocido';
+
+                const numeroLimpio = telefono.replace(/[^\d+]/g, '');
+
+                if (numeroLimpio.startsWith('+52')) return 'México';
+                if (numeroLimpio.startsWith('+1')) return 'USA/Canadá';
+                if (numeroLimpio.startsWith('+34')) return 'España';
+                if (numeroLimpio.startsWith('+')) return 'Internacional';
+
+                return 'Desconocido';
+            }
+
+            // Actualizar badge de país cuando cambia el input
+            $('input[name="nuevoTelefono"]').on('input', function() {
+                const telefono = $(this).val();
+                const pais = detectarPais(telefono);
+                $('#textoPais').text(pais);
+
+                // Cambiar color del badge según el país
+                const badge = $('#badgePais');
+                badge.removeClass('bg-info bg-success bg-warning bg-primary');
+
+                switch(pais) {
+                    case 'México':
+                        badge.addClass('bg-success');
+                        break;
+                    case 'USA/Canadá':
+                        badge.addClass('bg-primary');
+                        break;
+                    case 'España':
+                        badge.addClass('bg-warning');
+                        break;
+                    default:
+                        badge.addClass('bg-info');
+                }
+            });
+
+            // Manejar el envío del formulario de teléfono
+            $('#telefonoForm').on('submit', function(e) {
+                e.preventDefault();
+
+                // Mostrar loading
+                var submitBtn = $(this).find('button[type="submit"]');
+                var originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Actualizando...');
+
+                $.post($(this).attr('action'), $(this).serialize())
+                    .done(function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(function() {
+                                location.reload(); // Recargar para mostrar el nuevo teléfono
+                            }, 1500);
+                        } else {
+                            toastr.error(response.message);
+                            submitBtn.prop('disabled', false).html(originalText);
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('Error al actualizar el teléfono');
+                        submitBtn.prop('disabled', false).html(originalText);
+                    });
+            });
+
+            // ✅ CORREGIDO: Validación del formulario de subida de manual
+            $('#uploadManualForm').on('submit', function(e) {
+                var archivo = $('#archivo')[0].files[0];
+                var version = $('#version').val();
+
+                if (!archivo) {
+                    e.preventDefault();
+                    showAlert('Por favor seleccione un archivo PDF', 'danger');
+                    return false;
+                }
+
+                // Validar que sea PDF
+                if (archivo.type !== 'application/pdf') {
+                    e.preventDefault();
+                    showAlert('Solo se permiten archivos PDF', 'danger');
+                    return false;
+                }
+
+                // Validar tamaño (10MB máximo)
+                if (archivo.size > 10 * 1024 * 1024) {
+                    e.preventDefault();
+                    showAlert('El archivo no puede ser mayor a 10MB', 'danger');
+                    return false;
+                }
+
+                // Validar versión
+                if (!version || version.trim() === '') {
+                    e.preventDefault();
+                    showAlert('Por favor ingrese una versión', 'danger');
+                    return false;
+                }
+
+                // Mostrar loading
+                var submitBtn = $(this).find('button[type="submit"]');
+                var originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Subiendo...');
+
+                return true;
+            });
+
+            function showAlert(message, type) {
+                // Remover alertas existentes
+                $('.manual-alert').remove();
+
+                // Crear alerta temporal
+                var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible fade show manual-alert" role="alert">' +
+                    '<i class="bi bi-exclamation-triangle me-2"></i>' + message +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                    '</div>';
+
+                // Insertar antes del formulario
+                $('#uploadManualForm').before(alertHtml);
+
+                // Auto-remover después de 5 segundos
+                setTimeout(function() {
+                    $('.manual-alert').alert('close');
+                }, 5000);
+            }
+
+            // Limpiar formulario cuando se cierre el modal
+            $('#manualModal').on('hidden.bs.modal', function() {
+                $('#uploadManualForm')[0].reset();
+                $('.manual-alert').remove();
+
+                // Rehabilitar botón si estaba deshabilitado
+                var submitBtn = $('#uploadManualForm').find('button[type="submit"]');
+                submitBtn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i> Subir Nueva Versión');
+            });
+
+            // Mostrar nombre del archivo seleccionado
+            $('#archivo').on('change', function() {
+                var fileName = $(this).val().split('\\').pop();
+                if (fileName) {
+                    $(this).next('.form-text').html('Archivo seleccionado: <strong>' + fileName + '</strong>');
+                }
+            });
+
+            // Mostrar notificación si hay mensajes de TempData
+            @if (TempData["Success"] != null)
+            {
+                    <text>
+                    toastr.success('@TempData["Success"]');
+                    </text>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                    <text>
+                    toastr.error('@TempData["Error"]');
+                    </text>
+            }
+        });
+    </script>
+}
+
+@functions {
+    string GetTipoBadge(string tipoProblema)
+    {
+        return tipoProblema?.ToLower() switch
+        {
+            "impresora" => "bg-purple",
+            "internet" => "bg-info",
+            "red" => "bg-primary",
+            "software" => "bg-success",
+            "hardware" => "bg-warning text-dark",
+            "equipo lento" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+
+    string GetStatusBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "cancelado" => "bg-secondary",
+            "terminado" => "bg-secondary",
+            "en progreso" => "bg-primary",
+            "en proceso" => "bg-primary",
+            "asignado" => "bg-info",
+            _ => "bg-warning text-dark"
+        };
+    }
+
+    bool IsEstadoActivo(string estado)
+    {
+        if (string.IsNullOrEmpty(estado))
+            return true;
+
+        var estadoLower = estado.ToLower().Trim();
+        var estadosExcluidos = new List<string> {
+            "cancelado", "terminado", "resuelto", "finalizado", "completado", "cerrado"
+        };
+
+        return !estadosExcluidos.Contains(estadoLower);
+    }
+
+    string DetectarPais(string telefono)
+    {
+        if (string.IsNullOrWhiteSpace(telefono))
+            return "Desconocido";
+
+        var numeroLimpio = System.Text.RegularExpressions.Regex.Replace(telefono, @"[^\d+]", "");
+
+        return numeroLimpio.StartsWith("+52") ? "México" :
+               numeroLimpio.StartsWith("+1") ? "USA/Canadá" :
+               numeroLimpio.StartsWith("+34") ? "España" :
+               numeroLimpio.StartsWith("+") ? "Internacional" : "Desconocido";
+    }
+}

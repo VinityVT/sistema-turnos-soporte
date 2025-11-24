@@ -1,0 +1,1422 @@
+[
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ObtenerTodosEmpleados",
+    "RelativePath": "api/auth/empleados",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.EmpleadoRespuestaDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "Login",
+    "RelativePath": "api/auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.UsuarioLoginDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioRespuestaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ObtenerPerfilUsuario",
+    "RelativePath": "api/auth/perfil",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioPerfilDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "Registro",
+    "RelativePath": "api/auth/registro",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.UsuarioRegistroDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioRespuestaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "RegistrarEmpleado",
+    "RelativePath": "api/auth/registro-empleado",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.EmpleadoRegistroDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.EmpleadoRespuestaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ActualizarTecnico",
+    "RelativePath": "api/auth/tecnicos/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.UsuarioActualizacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioRespuestaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ObtenerTecnicoPorId",
+    "RelativePath": "api/auth/tecnicos/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioRespuestaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ObtenerTodosUsuarios",
+    "RelativePath": "api/auth/usuarios",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.UsuarioInfoDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "EliminarUsuario",
+    "RelativePath": "api/auth/usuarios/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ObtenerUsuarioPorId",
+    "RelativePath": "api/auth/usuarios/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioDetalleDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ActualizarUsuario",
+    "RelativePath": "api/auth/usuarios/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.UsuarioEdicionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioRespuestaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "BloquearUsuario",
+    "RelativePath": "api/auth/usuarios/{id}/bloquear",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.BloquearUsuarioDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ObtenerUsuarioParaEditar",
+    "RelativePath": "api/auth/usuarios/{id}/editar",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.UsuarioEdicionDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.AuthController",
+    "Method": "ReiniciarPassword",
+    "RelativePath": "api/auth/usuarios/{id}/reiniciar-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.ReiniciarPasswordDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ConfiguracionController",
+    "Method": "ActualizarConfiguracion",
+    "RelativePath": "api/configuracion",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "SIGESTEC.API.DTOs.ActualizarConfiguracionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ConfiguracionController",
+    "Method": "GetConfiguracion",
+    "RelativePath": "api/configuracion/{clave}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "clave",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.ConfiguracionSistemaDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerTodos",
+    "RelativePath": "api/equipos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.EquipoDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "CrearEquipo",
+    "RelativePath": "api/equipos",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.EquipoCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.EquipoDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerHistorial",
+    "RelativePath": "api/equipos/{equipoId}/historial",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "equipoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.HistorialIncidenteDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "AgregarIncidente",
+    "RelativePath": "api/equipos/{equipoId}/historial",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "equipoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "incidente",
+        "Type": "SIGESTEC.API.DTOs.HistorialIncidenteCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.HistorialIncidenteDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerCountIncidentesNoRevisados",
+    "RelativePath": "api/equipos/{equipoId}/incidentes-no-revisados",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "equipoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Int32",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerPorId",
+    "RelativePath": "api/equipos/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.EquipoDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ActualizarEquipo",
+    "RelativePath": "api/equipos/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.EquipoCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "EliminarEquipo",
+    "RelativePath": "api/equipos/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "CambiarEstadoEquipo",
+    "RelativePath": "api/equipos/{id}/estado",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "estadoDto",
+        "Type": "SIGESTEC.API.DTOs.CambiarEstadoDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerComponente",
+    "RelativePath": "api/equipos/componentes/{componenteId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "componenteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.ComponenteDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ActualizarComponente",
+    "RelativePath": "api/equipos/componentes/{componenteId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "componenteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.ComponenteCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "CambiarEstadoComponente",
+    "RelativePath": "api/equipos/componentes/{componenteId}/estado",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "componenteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "estadoDto",
+        "Type": "SIGESTEC.API.DTOs.CambiarEstadoDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerDisponibles",
+    "RelativePath": "api/equipos/disponibles",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.EquipoDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ActualizarIncidente",
+    "RelativePath": "api/equipos/historial/{incidenteId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "incidenteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "incidente",
+        "Type": "SIGESTEC.API.DTOs.HistorialIncidenteCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "RevisarIncidente",
+    "RelativePath": "api/equipos/historial/{incidenteId}/revisar",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "incidenteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.RevisarIncidenteDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerHistorialPorEstado",
+    "RelativePath": "api/equipos/historial/por-estado/{estado}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "estado",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.HistorialIncidenteDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.EquiposController",
+    "Method": "ObtenerPorEstado",
+    "RelativePath": "api/equipos/por-estado/{estado}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "estado",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.EquipoDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.InventarioController",
+    "Method": "ObtenerTodos",
+    "RelativePath": "api/inventario",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.InventarioDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.InventarioController",
+    "Method": "CrearArticulo",
+    "RelativePath": "api/inventario",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.InventarioCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.InventarioDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.InventarioController",
+    "Method": "ActualizarArticulo",
+    "RelativePath": "api/inventario/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.InventarioCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.InventarioController",
+    "Method": "EliminarArticulo",
+    "RelativePath": "api/inventario/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.InventarioController",
+    "Method": "AjustarStock",
+    "RelativePath": "api/inventario/ajustar-stock",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.AjusteStockDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.ManualUsuarioController",
+    "Method": "DescargarUltimoManual",
+    "RelativePath": "api/manualusuario/descargar-ultimo",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.ManualUsuarioController",
+    "Method": "DescargarManual",
+    "RelativePath": "api/manualusuario/descargar/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.ManualUsuarioController",
+    "Method": "ObtenerHistorial",
+    "RelativePath": "api/manualusuario/historial",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.ManualUsuarioInfoDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.ManualUsuarioController",
+    "Method": "SubirManual",
+    "RelativePath": "api/manualusuario/subir",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Archivo",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "Version",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.ManualUsuarioInfoDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SigestecApi.Controllers.ManualUsuarioController",
+    "Method": "ObtenerUltimoManualActivo",
+    "RelativePath": "api/manualusuario/ultimo-activo",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.ManualUsuarioInfoDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.PhotosController",
+    "Method": "GetDebugInfo",
+    "RelativePath": "api/photos/debug-info",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.PhotosController",
+    "Method": "ServeUserPhoto",
+    "RelativePath": "api/photos/servir/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.PhotosController",
+    "Method": "GetUserPhoto",
+    "RelativePath": "api/photos/usuario/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ReportsController",
+    "Method": "ExportEquiposReport",
+    "RelativePath": "api/reports/equipos/export",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "format",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "filterBy",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "filterValue",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ReportsController",
+    "Method": "ExportReport",
+    "RelativePath": "api/reports/export",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SIGESTEC.API.DTOs.ReportRequestDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ReportsController",
+    "Method": "ExportReportGet",
+    "RelativePath": "api/reports/export",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "reportType",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "format",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "startDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "endDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "filterBy",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "filterValue",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ReportsController",
+    "Method": "ExportInventarioReport",
+    "RelativePath": "api/reports/inventario/export",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "format",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.ReportsController",
+    "Method": "ExportTicketsReport",
+    "RelativePath": "api/reports/tickets/export",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "format",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "startDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "endDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "filterBy",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "filterValue",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "ObtenerTodos",
+    "RelativePath": "api/tickets",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.TicketDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "CrearTicket",
+    "RelativePath": "api/tickets",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.TicketCreacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.TicketDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "ObtenerPorId",
+    "RelativePath": "api/tickets/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.TicketDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "ActualizarTicket",
+    "RelativePath": "api/tickets/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.TicketActualizacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "AsignarTicketATecnico",
+    "RelativePath": "api/tickets/{id}/asignar",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.AsignarTicketDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "CancelarTicket",
+    "RelativePath": "api/tickets/{id}/cancelar",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.CancelarTicketDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "ObtenerHistorial",
+    "RelativePath": "api/tickets/{id}/historial",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.HistorialTicketDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "ObtenerHistorialUsuario",
+    "RelativePath": "api/tickets/{id}/historial-usuario",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.HistorialUsuarioDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "MarcarComoResuelto",
+    "RelativePath": "api/tickets/{id}/resolver",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "modelo",
+        "Type": "SIGESTEC.API.DTOs.ResolverTicketDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "GetEstadisticas",
+    "RelativePath": "api/tickets/estadisticas",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "periodo",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SIGESTEC.API.DTOs.EstadisticasTicketsDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "ObtenerMisTickets",
+    "RelativePath": "api/tickets/mis-tickets",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SIGESTEC.API.DTOs.TicketDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SIGESTEC.API.Controllers.TicketsController",
+    "Method": "GetTiposProblema",
+    "RelativePath": "api/tickets/tipos-problema",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[SigestecApi.DTOs.TipoProblemaDTO, SigestecApi, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  }
+]

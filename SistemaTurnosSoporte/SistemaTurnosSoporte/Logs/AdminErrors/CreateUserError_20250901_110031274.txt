@@ -1,0 +1,24 @@
+ERROR EN CREACIÓN DE USUARIO:
+Timestamp: 2025-09-01 11:00:35.444
+User: Administrador
+NombreCompleto: Juan
+Email: Juanzito@gmail.com
+UserType: Tecnico
+Telefono: 
+Departamento: 
+Posicion: 
+Exception Type: System.Net.Http.HttpRequestException
+Message: No connection could be made because the target machine actively refused it. (localhost:7181)
+Stack Trace:
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.CreateHttp11ConnectionAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.AddHttp11ConnectionAsync(QueueItem queueItem)
+   at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+   at System.Net.Http.DiagnosticsHandler.SendAsyncCore(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at System.Net.Http.HttpClient.<SendAsync>g__Core|83_0(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationTokenSource cts, Boolean disposeCts, CancellationTokenSource pendingRequestsCts, CancellationToken originalCancellationToken)
+   at SistemaSoporte.Controllers.AdminController.CreateUser(String nombreCompleto, String email, String password, String userType, String telefono, String departamento, String posicion) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Controllers\AdminController.cs:line 287
+
+Inner Exception: No connection could be made because the target machine actively refused it.

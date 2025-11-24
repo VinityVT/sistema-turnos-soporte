@@ -1,0 +1,121 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = SistemaTurnosSoporte
+build_property.RootNamespace = SistemaTurnosSoporte
+build_property.ProjectDir = C:\Users\Jason\source\repos\Nueva carpeta\SistemaTurnosSoporte\SistemaTurnosSoporte\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\Jason\source\repos\Nueva carpeta\SistemaTurnosSoporte\SistemaTurnosSoporte
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/AgregarIncidente.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQWdyZWdhckluY2lkZW50ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/CrearEquipo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQ3JlYXJFcXVpcG8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/DetalleEquipo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGV0YWxsZUVxdWlwby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/EditarEquipo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRWRpdGFyRXF1aXBvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/Equipos.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRXF1aXBvcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/GestionUsuarios.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cR2VzdGlvblVzdWFyaW9zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/ReporteInventario.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUmVwb3J0ZUludmVudGFyaW8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/Tecnicos.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVGVjbmljb3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Admin/Tickets.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVGlja2V0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Cuenta/AccesoDenegado.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VlbnRhXEFjY2Vzb0RlbmVnYWRvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Cuenta/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VlbnRhXExvZ2luLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Shared/Detalle.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXERldGFsbGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Tecnico/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGVjbmljb1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Tickets/CancelarConfirmacion.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGlja2V0c1xDYW5jZWxhckNvbmZpcm1hY2lvbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Tickets/Crear.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGlja2V0c1xDcmVhci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Tickets/Detalle.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGlja2V0c1xEZXRhbGxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Tickets/MisSolicitudes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGlja2V0c1xNaXNTb2xpY2l0dWRlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Jason/source/repos/Nueva carpeta/SistemaTurnosSoporte/SistemaTurnosSoporte/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-cew8vgml0x

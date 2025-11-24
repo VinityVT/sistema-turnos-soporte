@@ -1,0 +1,9 @@
+BLOQUEAR USUARIO ATTEMPT:
+Timestamp: 2025-10-28 02:59:55.792
+User ID: 843e32c3-485d-4a34-b2f1-d52726ad0067
+Action: Desbloquear
+Admin User: Administrador
+Remote IP: ::1
+
+SUCCESS:
+Response: {"success":true,"message":"Usuario desbloqueado correctamente"}

@@ -1,0 +1,596 @@
+﻿@model SIGESTEC.API.DTOs.HistorialIncidenteCreacionDTO
+@{
+    ViewData["Title"] = "Registrar Incidente";
+    var equipo = ViewBag.Equipo as SIGESTEC.API.DTOs.EquipoDTO;
+    var equipoId = ViewBag.EquipoId; // Cambiar esta línea - usar ViewBag en lugar de RouteData
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0 mt-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0"><i class="bi bi-exclamation-triangle me-2"></i> @ViewData["Title"]</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Progreso del formulario -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                                <div class="progress-bar" id="formProgress" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted" id="progressText">0% completado</small>
+                        </div>
+                    </div>
+
+                    <!-- Información del Equipo -->
+                    @if (equipo != null)
+                    {
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h5 class="mb-2">
+                                            <i class="bi bi-pc-display text-primary me-2"></i>
+                                            @equipo.Marca @equipo.Modelo
+                                        </h5>
+                                        <div class="row text-muted small">
+                                            <div class="col-auto">
+                                                <i class="bi bi-upc-scan me-1"></i> Serie: @equipo.NumeroSerie
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="bi bi-tag me-1"></i> Tipo: @equipo.Tipo
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="bi bi-hash me-1"></i> ID: @equipo.Id
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-md-end">
+                                        <span class="badge @GetEstadoEquipoBadge(equipo.Estado) fs-6">
+                                            @equipo.Estado
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle me-3 fs-4"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">Equipo no encontrado</h6>
+                                <p class="mb-0">No se pudo cargar la información del equipo. ID: @equipoId</p>
+                            </div>
+                        </div>
+                        <!-- Agregar botón para volver -->
+                        <div class="text-center mt-3">
+                            <a asp-controller="Admin" asp-action="Equipos" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Volver al Inventario
+                            </a>
+                        </div>
+                        return; // No mostrar el formulario si no hay equipo
+                    }
+
+                    <!-- Mostrar mensajes de error/success -->
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+                            <i class="bi bi-exclamation-triangle me-3 fs-5"></i>
+                            <div class="flex-grow-1">
+                                @TempData["ErrorMessage"]
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+                            <i class="bi bi-check-circle me-3 fs-5"></i>
+                            <div class="flex-grow-1">
+                                @TempData["SuccessMessage"]
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="AgregarIncidente" method="post" id="incidenteForm">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Cambiar a "id" para que coincida con el parámetro del controlador -->
+                        <input type="hidden" name="id" value="@equipoId" />
+                        <input type="hidden" asp-for="Estado" value="Reportado" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Por favor, corrija los siguientes errores:
+                        </div>
+
+                        <!-- Información del Incidente -->
+                        <div class="mb-4">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-clipboard-plus text-primary me-2"></i>Detalles del Incidente
+                            </h5>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select asp-for="Tipo" class="form-select" required>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Hardware">🔧 Hardware</option>
+                                            <option value="Software">💻 Software</option>
+                                            <option value="Red">🌐 Red</option>
+                                            <option value="Rendimiento">⚡ Rendimiento</option>
+                                            <option value="Seguridad">🔒 Seguridad</option>
+                                            <option value="Otro">❓ Otro</option>
+                                        </select>
+                                        <label asp-for="Tipo" class="fw-semibold">Tipo de Incidente *</label>
+                                        <div class="form-text">Seleccione la categoría del problema</div>
+                                        <span asp-validation-for="Tipo" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select asp-for="Prioridad" class="form-select">
+                                            <option value="Baja">🟢 Baja</option>
+                                            <option value="Media" selected>🟡 Media</option>
+                                            <option value="Alta">🔴 Alta</option>
+                                        </select>
+                                        <label asp-for="Prioridad" class="fw-semibold">Nivel de Prioridad</label>
+                                        <div class="form-text">Determine la urgencia de atención requerida</div>
+                                        <span asp-validation-for="Prioridad" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="form-floating">
+                                    <textarea asp-for="Descripcion" class="form-control" placeholder=" "
+                                              style="height: 150px" required></textarea>
+                                    <label asp-for="Descripcion" class="fw-semibold">Descripción del Incidente *</label>
+                                    <div class="form-text">
+                                        <i class="bi bi-lightbulb me-1"></i>
+                                        Describa detalladamente el incidente, incluyendo síntomas, mensajes de error, y pasos para reproducir el problema...
+                                    </div>
+                                    <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="form-floating">
+                                    <div class="form-control bg-light">
+                                        <i class="bi bi-clipboard-check text-success me-2"></i>
+                                        Reportado
+                                    </div>
+                                    <label class="fw-semibold">Estado del Incidente</label>
+                                    <div class="form-text">Todos los incidentes nuevos se crean con estado "Reportado"</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen antes de guardar -->
+                        <div class="card bg-light border-0 mb-4" id="resumenCard" style="display: none;">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">
+                                    <i class="bi bi-check-circle text-success me-2"></i>Resumen del Incidente
+                                </h6>
+                                <div class="row small">
+                                    <div class="col-md-6">
+                                        <strong>Tipo:</strong> <span id="resumenTipo">-</span><br>
+                                        <strong>Prioridad:</strong> <span id="resumenPrioridad">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Estado:</strong> <span id="resumenEstado">Reportado</span><br>
+                                        <strong>Caracteres:</strong> <span id="resumenCaracteres">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                            <a asp-controller="Admin" asp-action="DetalleEquipo" asp-route-id="@equipoId"
+                               class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning" id="submitButton">
+                                <i class="bi bi-clipboard-plus me-1"></i> Registrar Incidente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga - Diseño Oscuro -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2 text-white">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-light mb-0 small">Registrando incidente en el sistema</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">El incidente se ha registrado correctamente.</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-success" id="successModalButton" data-bs-dismiss="modal">
+                        <i class="bi bi-check-lg me-2"></i>Aceptar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function() {
+            // Actualizar progreso inicial
+            actualizarProgreso();
+
+            // Validación en tiempo real y progreso
+            $('select[required], textarea[required]').on('change input', function() {
+                if ($(this).val().trim()) {
+                    $(this).removeClass('is-invalid');
+                }
+                actualizarProgreso();
+                actualizarResumen();
+            });
+
+            // Validación del formulario con AJAX
+            $('#incidenteForm').on('submit', function(e) {
+                e.preventDefault(); // Prevenir envío normal
+
+                let isValid = true;
+
+                // Validar campos requeridos
+                $('select[required], textarea[required]').each(function() {
+                    if (!$(this).val().trim()) {
+                        $(this).addClass('is-invalid');
+                        isValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    mostrarAlertaModal('danger', 'Por favor, complete todos los campos requeridos marcados en rojo.');
+                    return;
+                }
+
+                // Mostrar modal de carga oscuro
+                showLoadingModal('Registrando incidente...');
+                $('#submitButton').html('<i class="bi bi-hourglass-split me-1"></i> Procesando...').prop('disabled', true);
+
+                // Preparar datos para AJAX
+                const formData = new FormData(this);
+
+                // Enviar via AJAX
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        hideLoadingModal();
+
+                        if (response.success) {
+                            // Mostrar modal de éxito
+                            showSuccessModal(
+                                '¡Incidente Registrado!',
+                                'El incidente se ha registrado correctamente en el sistema.',
+                                false // No auto-cerrar
+                            );
+
+                            // Configurar botón del modal de éxito para redireccionar
+                            $('#successModalButton').off('click').on('click', function() {
+                                window.location.href = '@Url.Action("DetalleEquipo", "Admin", new { id = equipoId })';
+                            });
+
+                            // Limpiar formulario
+                            $('#incidenteForm')[0].reset();
+                            actualizarProgreso();
+                            actualizarResumen();
+                        } else {
+                            mostrarAlertaModal('danger', response.message || 'Error al registrar el incidente.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        hideLoadingModal();
+                        let errorMessage = 'Error al procesar la solicitud.';
+
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.message || errorMessage;
+                        } catch (e) {
+                            errorMessage = xhr.statusText || errorMessage;
+                        }
+
+                        mostrarAlertaModal('danger', errorMessage);
+                    },
+                    complete: function() {
+                        $('#submitButton').html('<i class="bi bi-clipboard-plus me-1"></i> Registrar Incidente').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Auto-ocultar alertas después de 5 segundos
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+        });
+
+        function actualizarProgreso() {
+            let camposCompletados = 0;
+            let totalCampos = 0;
+
+            // Campos requeridos
+            const camposRequeridos = ['#Tipo', '#Descripcion'];
+            totalCampos += camposRequeridos.length;
+
+            camposRequeridos.forEach(campo => {
+                if ($(campo).val().trim()) camposCompletados++;
+            });
+
+            const porcentaje = Math.round((camposCompletados / totalCampos) * 100);
+            $('#formProgress').css('width', porcentaje + '%');
+            $('#progressText').text(porcentaje + '% completado');
+
+            // Cambiar color del progreso según el porcentaje
+            const progressBar = $('#formProgress');
+            progressBar.removeClass('bg-danger bg-warning bg-success');
+            if (porcentaje < 50) {
+                progressBar.addClass('bg-danger');
+            } else if (porcentaje < 100) {
+                progressBar.addClass('bg-warning');
+            } else {
+                progressBar.addClass('bg-success');
+            }
+        }
+
+        function actualizarResumen() {
+            const tieneDatos = $('#Tipo').val() && $('#Descripcion').val().trim();
+
+            if (tieneDatos) {
+                $('#resumenCard').show();
+                $('#resumenTipo').text($('#Tipo').val() || '-');
+                $('#resumenPrioridad').text($('#Prioridad').val() || '-');
+                $('#resumenCaracteres').text($('#Descripcion').val().length);
+            } else {
+                $('#resumenCard').hide();
+            }
+        }
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = false) {
+            // Configurar como éxito
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+
+            // Configurar comportamiento del botón
+            $('#successModalButton').off('click').on('click', function() {
+                $('#successModal').modal('hide');
+            });
+
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function mostrarAlertaModal(tipo, mensaje, autoClose = true) {
+            // Configurar según el tipo
+            const icon = tipo === 'success' ? 'bi-check-circle-fill' :
+                        tipo === 'warning' ? 'bi-exclamation-triangle-fill' :
+                        'bi-exclamation-triangle-fill';
+
+            const buttonClass = tipo === 'success' ? 'btn-success' :
+                              tipo === 'warning' ? 'btn-warning' : 'btn-danger';
+
+            const iconClass = tipo === 'success' ? 'text-success' :
+                            tipo === 'warning' ? 'text-warning' : 'text-danger';
+
+            $('#successModalIcon').removeClass('text-success text-warning text-danger bi-check-circle-fill bi-exclamation-triangle-fill')
+                                 .addClass(iconClass + ' ' + icon);
+            $('#successModalButton').removeClass('btn-success btn-warning btn-danger').addClass(buttonClass);
+            $('#successModalTitle').text(tipo === 'success' ? '¡Éxito!' :
+                                       tipo === 'warning' ? 'Advertencia' : 'Error');
+            $('#successModalMessage').text(mensaje);
+
+            // Configurar comportamiento del botón
+            $('#successModalButton').off('click').on('click', function() {
+                $('#successModal').modal('hide');
+            });
+
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                const duration = tipo === 'success' ? 3000 :
+                               tipo === 'warning' ? 4000 : 5000;
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, duration);
+            }
+        }
+    </script>
+
+    <style>
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .progress {
+            background-color: #e9ecef;
+        }
+
+        #resumenCard {
+            transition: all 0.3s ease;
+        }
+
+        /* === DISEÑO OSCURO PARA MODAL DE CARGA === */
+        #loadingModal .modal-content {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 1px solid #404040;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: #ffffff;
+        }
+
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        #loadingModal .spinner-border {
+            color: #0dcaf0;
+            border-width: 0.3em;
+        }
+
+        #loadingModalMessage {
+            color: #b0b0b0;
+        }
+
+        /* Estilos para el modal de éxito */
+        #successModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Backdrop oscuro para modales */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+            .modal-backdrop.show {
+                opacity: 0.8;
+            }
+    </style>
+}
+
+    <style>
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .progress {
+            background-color: #e9ecef;
+        }
+
+        #resumenCard {
+            transition: all 0.3s ease;
+        }
+
+        /* Estilos para los modales de éxito y carga */
+        #successModal .modal-content,
+        #loadingModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        /* Estilos para el modal de carga */
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+}
+
+@functions {
+    string GetEstadoEquipoBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "disponible" => "bg-success",
+            "enuso" or "en uso" => "bg-primary",
+            "enmantenimiento" or "en mantenimiento" => "bg-warning text-dark",
+            "dadodebaja" or "dado de baja" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+}

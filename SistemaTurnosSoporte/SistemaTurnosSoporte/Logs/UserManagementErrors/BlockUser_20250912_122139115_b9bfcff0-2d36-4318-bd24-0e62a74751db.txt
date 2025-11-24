@@ -1,0 +1,9 @@
+BLOQUEAR USUARIO ATTEMPT:
+Timestamp: 2025-09-12 12:21:39.119
+User ID: b9bfcff0-2d36-4318-bd24-0e62a74751db
+Action: Desbloquear
+Admin User: Administrador
+Remote IP: ::1
+
+SUCCESS:
+Response: {"success":true,"message":"Usuario desbloqueado correctamente"}

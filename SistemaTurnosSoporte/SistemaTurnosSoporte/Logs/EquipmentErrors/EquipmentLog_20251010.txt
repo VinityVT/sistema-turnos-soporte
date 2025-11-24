@@ -1,0 +1,6 @@
+[2025-10-10 11:47:48.779] [ERROR] OPERACIÓN: EDITAR_EQUIPO | EQUIPO: 1 | USUARIO: System
+MENSAJE: Error de validación en modelo: El tipo es requerido; La marca es requerida; El modelo es requerido; The Componentes field is required.; El número de serie es requerido
+--------------------------------------------------------------------------------
+[2025-10-10 11:48:21.231] [ERROR] OPERACIÓN: CREAR_EQUIPO | EQUIPO: Nuevo | USUARIO: System
+MENSAJE: Error de validación en modelo: El tipo es requerido; La marca es requerida; El modelo es requerido; The Componentes field is required.; El número de serie es requerido
+--------------------------------------------------------------------------------

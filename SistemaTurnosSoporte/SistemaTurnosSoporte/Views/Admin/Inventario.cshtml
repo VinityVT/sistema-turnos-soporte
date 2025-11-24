@@ -1,0 +1,1118 @@
+﻿@using SistemaSoporte.Extensions
+@model List<SIGESTEC.API.DTOs.InventarioDTO>
+@{
+    ViewData["Title"] = "Gestión de Inventario";
+    var totalArticulos = Model?.Count ?? 0;
+    var enStock = Model?.Count(a => a.StockActual > 0) ?? 0;
+    var sinStock = Model?.Count(a => a.StockActual <= 0) ?? 0;
+
+    // Obtener categorías de forma segura
+    var categorias = Model?.Select(a => a.Categoria).Distinct().OrderBy(c => c).ToList() ?? new List<string>();
+}
+
+<div class="container-fluid">
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1 text-white">
+                <i class="bi bi-box-seam text-primary me-2"></i> @ViewData["Title"]
+            </h1>
+            <p class="text-muted mb-0">Administra el inventario de artículos y suministros</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearArticuloModal">
+                <i class="bi bi-plus-circle me-1"></i> Nuevo Artículo
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenedor de Alertas -->
+    <div id="alertContainer"></div>
+
+    <div class="row">
+        <!-- Barra Lateral de Filtros -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3">
+                    <h6 class="mb-0 text-white">
+                        <i class="bi bi-funnel me-2"></i>Filtrar Artículos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Búsqueda -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-white">Buscar</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Nombre, categoría..." id="searchInput">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Stock -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-white">Estado de Stock</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="stock" data-value="all">
+                                Todos (@totalArticulos)
+                            </button>
+                            <button class="btn btn-sm btn-outline-success filter-btn" data-filter="stock" data-value="conStock">
+                                En Stock (@enStock)
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning filter-btn" data-filter="stock" data-value="sinStock">
+                                Sin Stock (@sinStock)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Categoría -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-white">Categoría</label>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="categoria" data-value="all">
+                                Todas
+                            </button>
+                            @foreach (var categoria in categorias)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary filter-btn" data-filter="categoria" data-value="@categoria">
+                                    @categoria (@Model.Count(a => a.Categoria == categoria))
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Acciones Rápidas -->
+                    <div class="mt-4 pt-3 border-top">
+                        <label class="form-label small fw-bold text-white">Acciones Rápidas</label>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#crearArticuloModal">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar Artículo
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="exportarReporte('Inventario', 'Excel')">
+                                <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="refreshButton">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Principal de Artículos -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-header py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0 text-white">
+                                <i class="bi bi-list-ul me-2"></i>Artículos en Inventario
+                                <span class="badge bg-primary ms-2" id="articuloCount">@totalArticulos</span>
+                            </h5>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="sortByNombre">
+                                    <i class="bi bi-sort-alpha-down"></i> Nombre
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="sortByCategoria">
+                                    <i class="bi bi-tags"></i> Categoría
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="sortByStock">
+                                    <i class="bi bi-box"></i> Stock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <!-- Estado Vacío -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-box-seam display-1 text-muted opacity-25"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No hay artículos en el inventario</h5>
+                            <p class="text-muted mb-4">Comienza agregando el primer artículo al inventario</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearArticuloModal">
+                                <i class="bi bi-plus-circle me-2"></i>Agregar Primer Artículo
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Vista de Tarjetas (Mobile) -->
+                        <div class="d-lg-none">
+                            <div class="row g-3 p-3" id="articulosCardView">
+                                @foreach (var articulo in Model.OrderBy(a => a.Nombre))
+                                {
+                                    <div class="col-12 articulo-card"
+                                         data-nombre="@articulo.Nombre.ToLower()"
+                                         data-categoria="@articulo.Categoria"
+                                         data-stock="@articulo.StockActual"
+                                         data-search="@($"{articulo.Id} {articulo.Nombre} {articulo.Categoria}".ToLower())"
+                                         data-articulo-id="@articulo.Id">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body">
+                                                <!-- Header de la Tarjeta -->
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-box text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0 fw-bold text-white">@articulo.Nombre</h6>
+                                                            <small class="text-muted">ID: @articulo.Id</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge @GetStockBadge(articulo.StockActual)">
+                                                        @articulo.StockActual
+                                                    </span>
+                                                </div>
+
+                                                <!-- Información del Artículo -->
+                                                <div class="mb-3">
+                                                    <span class="badge bg-secondary mb-2">@articulo.Categoria</span>
+                                                    @if (!string.IsNullOrEmpty(articulo.Descripcion))
+                                                    {
+                                                        <p class="small text-muted mb-2">@articulo.Descripcion.Truncate(80)</p>
+                                                    }
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-calendar me-1"></i>
+                                                        Actualizado: @articulo.FechaActualizacion.ToString("dd/MM/yyyy")
+                                                    </small>
+                                                </div>
+
+                                                <!-- Acciones -->
+                                                <div class="d-grid gap-2">
+                                                    <div class="btn-group w-100" role="group">
+                                                        <button class="btn btn-outline-warning btn-sm" onclick="editarArticulo(@articulo.Id, '@articulo.Nombre', '@articulo.Categoria', '@articulo.Descripcion', @articulo.StockActual)">
+                                                            <i class="bi bi-pencil"></i> Editar
+                                                        </button>
+                                                        <button class="btn btn-outline-info btn-sm" onclick="ajustarStock(@articulo.Id, '@articulo.Nombre')">
+                                                            <i class="bi bi-plus-slash-minus"></i> Stock
+                                                        </button>
+                                                        <button class="btn btn-outline-danger btn-sm" onclick="eliminarArticulo(@articulo.Id, '@articulo.Nombre')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Vista de Tabla (Desktop) -->
+                        <div class="d-none d-lg-block">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Artículo</th>
+                                            <th>Categoría</th>
+                                            <th>Stock</th>
+                                            <th>Descripción</th>
+                                            <th>Última Actualización</th>
+                                            <th class="text-end pe-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="articulosTableView">
+                                        @foreach (var articulo in Model.OrderBy(a => a.Nombre))
+                                        {
+                                            <tr class="articulo-row"
+                                                data-nombre="@articulo.Nombre.ToLower()"
+                                                data-categoria="@articulo.Categoria"
+                                                data-stock="@articulo.StockActual"
+                                                data-search="@($"{articulo.Id} {articulo.Nombre} {articulo.Categoria}".ToLower())"
+                                                data-articulo-id="@articulo.Id">
+                                                <td class="ps-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                            <i class="bi bi-box text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-white">@articulo.Nombre</div>
+                                                            <small class="text-muted">ID: @articulo.Id</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">@articulo.Categoria</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge @GetStockBadge(articulo.StockActual)">
+                                                        @articulo.StockActual unidades
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(articulo.Descripcion))
+                                                    {
+                                                        <small class="text-muted">@articulo.Descripcion.Truncate(60)</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">Sin descripción</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        @articulo.FechaActualizacion.ToString("dd/MM/yyyy")
+                                                    </small>
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-warning"
+                                                                onclick="editarArticulo(@articulo.Id, '@articulo.Nombre', '@articulo.Categoria', '@articulo.Descripcion', @articulo.StockActual)"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Editar artículo">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-info"
+                                                                onclick="ajustarStock(@articulo.Id, '@articulo.Nombre')"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Ajustar stock">
+                                                            <i class="bi bi-plus-slash-minus"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger"
+                                                                onclick="eliminarArticulo(@articulo.Id, '@articulo.Nombre')"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Eliminar artículo">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model != null && Model.Any())
+                {
+                    <div class="card-footer border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Mostrando <span id="filteredCount">@totalArticulos</span> de <span id="totalCount">@totalArticulos</span> artículos
+                            </small>
+                            <div>
+                                <button class="btn btn-success btn-sm me-2" onclick="exportarReporte('Inventario', 'Excel')">
+                                    <i class="bi bi-file-earmark-excel me-1"></i> Exportar Excel
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="exportarReporte('Inventario', 'PDF')">
+                                    <i class="bi bi-file-pdf me-1"></i> Exportar PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear Artículo -->
+<div class="modal fade" id="crearArticuloModal" tabindex="-1" aria-labelledby="crearArticuloModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="crearArticuloModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Artículo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formCrearArticulo" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Nombre del Artículo *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-box"></i></span>
+                            <input type="text" class="form-control" name="Nombre" required maxlength="100" placeholder="Ej: Mouse inalámbrico, Teclado mecánico...">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Categoría *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-tags"></i></span>
+                            <select class="form-select" name="Categoria" required>
+                                <option value="">Seleccione una categoría</option>
+                                <option value="🖥️ Componentes de Computadora">🖥️ Componentes de Computadora</option>
+                                <option value="⌨️ Periféricos">⌨️ Periféricos</option>
+                                <option value="📄 Suministros de Oficina">📄 Suministros de Oficina</option>
+                                <option value="🧹 Limpieza General">🧹 Limpieza General</option>
+                                <option value="💻 Limpieza de PC">💻 Limpieza de PC</option>
+                                <option value="🪑 Mobiliario">🪑 Mobiliario</option>
+                                <option value="🔌 Equipos Electrónicos">🔌 Equipos Electrónicos</option>
+                                <option value="🛠️ Herramientas">🛠️ Herramientas</option>
+                                <option value="✏️ Material de Escritorio">✏️ Material de Escritorio</option>
+                                <option value="📦 Otros">📦 Otros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Stock Inicial</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-box-arrow-in-down"></i></span>
+                            <input type="number" class="form-control" name="StockActual" value="0" min="0" step="1">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Descripción</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                            <textarea class="form-control" name="Descripcion" rows="3" maxlength="500" placeholder="Descripción opcional del artículo..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitCrearArticulo">
+                        <i class="bi bi-plus-circle me-1"></i>Crear Artículo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Artículo - NUEVO -->
+<div class="modal fade" id="editarArticuloModal" tabindex="-1" aria-labelledby="editarArticuloModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editarArticuloModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Editar Artículo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarArticulo" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editarArticuloId" name="Id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Nombre del Artículo *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-box"></i></span>
+                            <input type="text" class="form-control" id="editarNombre" name="Nombre" required maxlength="100" placeholder="Ej: Mouse inalámbrico, Teclado mecánico...">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Categoría *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-tags"></i></span>
+                            <select class="form-select" id="editarCategoria" name="Categoria" required>
+                                <option value="">Seleccione una categoría</option>
+                                <option value="🖥️ Componentes de Computadora">🖥️ Componentes de Computadora</option>
+                                <option value="⌨️ Periféricos">⌨️ Periféricos</option>
+                                <option value="📄 Suministros de Oficina">📄 Suministros de Oficina</option>
+                                <option value="🧹 Limpieza General">🧹 Limpieza General</option>
+                                <option value="💻 Limpieza de PC">💻 Limpieza de PC</option>
+                                <option value="🪑 Mobiliario">🪑 Mobiliario</option>
+                                <option value="🔌 Equipos Electrónicos">🔌 Equipos Electrónicos</option>
+                                <option value="🛠️ Herramientas">🛠️ Herramientas</option>
+                                <option value="✏️ Material de Escritorio">✏️ Material de Escritorio</option>
+                                <option value="📦 Otros">📦 Otros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Descripción</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                            <textarea class="form-control" id="editarDescripcion" name="Descripcion" rows="3" maxlength="500" placeholder="Descripción opcional del artículo..."></textarea>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>El stock se ajusta mediante la función específica "Ajustar Stock"</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditarArticulo">
+                        <i class="bi bi-check-circle me-1"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ajustar Stock -->
+<div class="modal fade" id="ajustarStockModal" tabindex="-1" aria-labelledby="ajustarStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="ajustarStockModalLabel">
+                    <i class="bi bi-plus-slash-minus me-2"></i>Ajustar Stock
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formAjustarStock" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="ajusteArticuloId" name="ArticuloId">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-box me-2"></i>
+                        <span id="nombreArticulo">Artículo: </span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-white">Nuevo Stock *</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-box-arrow-in-down"></i></span>
+                            <input type="number" class="form-control" id="nuevoStock" name="NuevoStock" required min="0" step="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitAjustarStock">
+                        <i class="bi bi-check-circle me-1"></i>Actualizar Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Eliminar Artículo -->
+<div class="modal fade" id="eliminarArticuloModal" tabindex="-1" aria-labelledby="eliminarArticuloModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="eliminarArticuloModalLabel">
+                    <i class="bi bi-trash me-2"></i>Eliminar Artículo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning display-4"></i>
+                </div>
+                <h6 class="mb-3">¿Está seguro de eliminar este artículo?</h6>
+                <p class="text-white mb-2">Artículo: <strong id="articuloEliminarNombre" class="text-white"></strong></p>
+                <p class="text-danger mb-0"><small>⚠️ Esta acción no se puede deshacer.</small></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <form id="formEliminarArticulo" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="eliminarArticuloId" name="id">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Variables globales para control del estado
+        let pendingReload = false;
+
+        $(document).ready(function() {
+            // Configuración inicial con tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip({
+                template: '<div class="tooltip" role="tooltip"><div class="tooltip-inner bg-dark"></div><div class="tooltip-arrow"></div></div>'
+            });
+
+            // Filtros
+            $('.filter-btn').click(function() {
+                const filterType = $(this).data('filter');
+                const value = $(this).data('value');
+
+                $(`.filter-btn[data-filter="${filterType}"]`).removeClass('active');
+                $(this).addClass('active');
+
+                aplicarFiltros();
+            });
+
+            // Búsqueda en tiempo real
+            $('#searchInput').on('keyup', aplicarFiltros);
+            $('#clearSearch').click(function() {
+                $('#searchInput').val('');
+                aplicarFiltros();
+            });
+
+            // Ordenamiento
+            $('#sortByNombre').click(function() {
+                ordenarArticulos('nombre');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            $('#sortByCategoria').click(function() {
+                ordenarArticulos('categoria');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            $('#sortByStock').click(function() {
+                ordenarArticulos('stock');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            // Refresh
+            $('#refreshButton').click(function() {
+                $(this).find('i').addClass('spin');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            });
+
+            // Crear artículo
+            $('#formCrearArticulo').submit(function(e) {
+                e.preventDefault();
+                crearArticulo();
+            });
+
+            // Editar artículo
+            $('#formEditarArticulo').submit(function(e) {
+                e.preventDefault();
+                editarArticuloSubmit();
+            });
+
+            // Ajustar stock
+            $('#formAjustarStock').submit(function(e) {
+                e.preventDefault();
+                ajustarStockSubmit();
+            });
+
+            // Eliminar artículo
+            $('#formEliminarArticulo').submit(function(e) {
+                e.preventDefault();
+                eliminarArticuloSubmit();
+            });
+
+            // Evento para recargar cuando se cierra el modal de éxito
+            $('#successModal').on('hidden.bs.modal', function() {
+                if (pendingReload) {
+                    window.location.reload();
+                    pendingReload = false;
+                }
+            });
+
+            // Limpiar formularios al cerrar modales
+            $('#crearArticuloModal').on('hidden.bs.modal', function() {
+                $(this).find('form').trigger('reset');
+                $('#submitCrearArticulo').prop('disabled', false).html('<i class="bi bi-plus-circle me-1"></i>Crear Artículo');
+            });
+
+            $('#editarArticuloModal').on('hidden.bs.modal', function() {
+                $('#submitEditarArticulo').prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Guardar Cambios');
+            });
+
+            $('#ajustarStockModal').on('hidden.bs.modal', function() {
+                $('#submitAjustarStock').prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Actualizar Stock');
+            });
+
+            // Inicializar filtros
+            aplicarFiltros();
+        });
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = true) {
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function showErrorModal(title, message, autoClose = true) {
+            $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-danger bi-exclamation-triangle-fill');
+            $('#successModalButton').removeClass('btn-success btn-warning').addClass('btn-danger');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 4000);
+            }
+        }
+
+        // === FUNCIONES DE FILTRADO Y ORDENAMIENTO ===
+
+        function aplicarFiltros() {
+            const searchText = $('#searchInput').val().toLowerCase();
+            const stockFilter = $('.filter-btn[data-filter="stock"].active').data('value');
+            const categoriaFilter = $('.filter-btn[data-filter="categoria"].active').data('value');
+
+            let visibleCount = 0;
+
+            $('.articulo-row, .articulo-card').each(function() {
+                const rowText = $(this).data('search');
+                const stock = $(this).data('stock');
+                const categoria = $(this).data('categoria');
+
+                const matchesSearch = !searchText || rowText.includes(searchText);
+                const matchesStock = stockFilter === 'all' ||
+                    (stockFilter === 'conStock' && stock > 0) ||
+                    (stockFilter === 'sinStock' && stock <= 0);
+                const matchesCategoria = categoriaFilter === 'all' || categoria === categoriaFilter;
+
+                const isVisible = matchesSearch && matchesStock && matchesCategoria;
+                $(this).toggle(isVisible);
+
+                if (isVisible) visibleCount++;
+            });
+
+            const totalCount = $('.articulo-row').length;
+
+            $('#articuloCount').text(visibleCount);
+            $('#filteredCount').text(visibleCount);
+            $('#totalCount').text(totalCount);
+
+            if (visibleCount === 0) {
+                if ($('#noResultsMessage').length === 0) {
+                    $('.table-responsive, #articulosCardView').append(`
+                        <div class="text-center py-5" id="noResultsMessage">
+                            <i class="bi bi-search display-4 text-muted"></i>
+                            <p class="mt-3 text-muted">No se encontraron artículos con los filtros aplicados</p>
+                            <button class="btn btn-outline-primary" onclick="limpiarFiltros()">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Limpiar filtros
+                            </button>
+                        </div>
+                    `);
+                }
+            } else {
+                $('#noResultsMessage').remove();
+            }
+        }
+
+        function ordenarArticulos(criterio) {
+            const $containerTable = $('#articulosTableView');
+            const $containerCards = $('#articulosCardView');
+
+            const $itemsTable = $('.articulo-row').detach().toArray();
+            const $itemsCards = $('.articulo-card').detach().toArray();
+
+            const sortFunction = (a, b) => {
+                if (criterio === 'nombre') {
+                    const nombreA = $(a).data('nombre');
+                    const nombreB = $(b).data('nombre');
+                    return nombreA.localeCompare(nombreB);
+                } else if (criterio === 'categoria') {
+                    const categoriaA = $(a).data('categoria');
+                    const categoriaB = $(b).data('categoria');
+                    return categoriaA.localeCompare(categoriaB);
+                } else if (criterio === 'stock') {
+                    const stockA = $(a).data('stock');
+                    const stockB = $(b).data('stock');
+                    return stockB - stockA;
+                }
+                return 0;
+            };
+
+            $itemsTable.sort(sortFunction);
+            $itemsCards.sort(sortFunction);
+
+            $containerTable.append($itemsTable);
+            $containerCards.append($itemsCards);
+            aplicarFiltros();
+        }
+
+        function limpiarFiltros() {
+            $('#searchInput').val('');
+            $('.filter-btn').removeClass('active');
+            $('.filter-btn[data-value="all"]').addClass('active');
+            $('.articulo-row, .articulo-card').show();
+
+            const totalCount = $('.articulo-row').length;
+            $('#articuloCount').text(totalCount);
+            $('#filteredCount').text(totalCount);
+            $('#totalCount').text(totalCount);
+            $('#noResultsMessage').remove();
+        }
+
+        // === FUNCIONES PRINCIPALES ===
+
+        async function crearArticulo() {
+            const submitButton = $('#submitCrearArticulo');
+            const originalText = submitButton.html();
+
+            try {
+                submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Creando...');
+
+                const formData = new FormData(document.getElementById('formCrearArticulo'));
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch('/Admin/CrearArticuloInventario', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        $('#crearArticuloModal').modal('hide');
+                        showSuccessModal('Artículo Creado', 'El artículo se ha creado exitosamente.');
+                        pendingReload = true;
+                    } else {
+                        showErrorModal('Error al crear', result.message || 'Error al crear el artículo');
+                        submitButton.prop('disabled', false).html(originalText);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showErrorModal('Error al crear', errorData.message || 'Error al crear el artículo');
+                    submitButton.prop('disabled', false).html(originalText);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorModal('Error de conexión', 'Error de conexión. Intente nuevamente.');
+                submitButton.prop('disabled', false).html(originalText);
+            }
+        }
+
+        function editarArticulo(articuloId, nombre, categoria, descripcion, stockActual) {
+            // Llenar el formulario con los datos actuales
+            $('#editarArticuloId').val(articuloId);
+            $('#editarNombre').val(nombre);
+            $('#editarDescripcion').val(descripcion || '');
+
+            // Seleccionar la categoría correcta en el dropdown
+            $('#editarCategoria').val(categoria);
+
+            // Mostrar el modal
+            $('#editarArticuloModal').modal('show');
+        }
+
+        async function editarArticuloSubmit() {
+            const submitButton = $('#submitEditarArticulo');
+            const originalText = submitButton.html();
+
+            try {
+                submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Guardando...');
+
+                const articuloId = $('#editarArticuloId').val();
+                const formData = new FormData(document.getElementById('formEditarArticulo'));
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch(`/Admin/ActualizarArticuloInventario?id=${articuloId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        $('#editarArticuloModal').modal('hide');
+                        showSuccessModal('Artículo Actualizado', 'Los cambios se han guardado correctamente.');
+                        pendingReload = true;
+                    } else {
+                        showErrorModal('Error al actualizar', result.message || 'Error al actualizar el artículo');
+                        submitButton.prop('disabled', false).html(originalText);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showErrorModal('Error al actualizar', errorData.message || 'Error al actualizar el artículo');
+                    submitButton.prop('disabled', false).html(originalText);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorModal('Error de conexión', 'Error de conexión. Intente nuevamente.');
+                submitButton.prop('disabled', false).html(originalText);
+            }
+        }
+
+        function ajustarStock(articuloId, nombre) {
+            $('#ajusteArticuloId').val(articuloId);
+            $('#nombreArticulo').text(`Artículo: ${nombre}`);
+            $('#nuevoStock').val('');
+            $('#ajustarStockModal').modal('show');
+        }
+
+        async function ajustarStockSubmit() {
+            const submitButton = $('#submitAjustarStock');
+            const originalText = submitButton.html();
+
+            try {
+                submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Actualizando...');
+
+                const formData = new FormData(document.getElementById('formAjustarStock'));
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch('/Admin/AjustarStockInventario', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        $('#ajustarStockModal').modal('hide');
+                        showSuccessModal('Stock Actualizado', 'El stock se ha actualizado correctamente.');
+                        pendingReload = true;
+                    } else {
+                        showErrorModal('Error al actualizar', result.message || 'Error al actualizar el stock');
+                        submitButton.prop('disabled', false).html(originalText);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showErrorModal('Error al actualizar', errorData.message || 'Error al actualizar el stock');
+                    submitButton.prop('disabled', false).html(originalText);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorModal('Error de conexión', 'Error de conexión. Intente nuevamente.');
+                submitButton.prop('disabled', false).html(originalText);
+            }
+        }
+
+        function eliminarArticulo(articuloId, nombre) {
+            $('#eliminarArticuloId').val(articuloId);
+            $('#articuloEliminarNombre').text(nombre);
+            $('#eliminarArticuloModal').modal('show');
+        }
+
+        async function eliminarArticuloSubmit() {
+            const submitButton = $('#formEliminarArticulo button[type="submit"]');
+            const originalText = submitButton.html();
+
+            try {
+                submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Eliminando...');
+
+                const formData = new FormData(document.getElementById('formEliminarArticulo'));
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch('/Admin/EliminarArticuloInventario', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        $('#eliminarArticuloModal').modal('hide');
+                        showSuccessModal('Artículo Eliminado', 'El artículo se ha eliminado correctamente.');
+                        pendingReload = true;
+                    } else {
+                        showErrorModal('Error al eliminar', result.message || 'Error al eliminar el artículo');
+                        submitButton.prop('disabled', false).html(originalText);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showErrorModal('Error al eliminar', errorData.message || 'Error al eliminar el artículo');
+                    submitButton.prop('disabled', false).html(originalText);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorModal('Error de conexión', 'Error de conexión. Intente nuevamente.');
+                submitButton.prop('disabled', false).html(originalText);
+            }
+        }
+
+        function exportarReporte(reportType, format) {
+            try {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Admin/ExportarReporteSimple';
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '__RequestVerificationToken';
+                tokenInput.value = token;
+                form.appendChild(tokenInput);
+
+                const typeInput = document.createElement('input');
+                typeInput.type = 'hidden';
+                typeInput.name = 'reportType';
+                typeInput.value = reportType;
+                form.appendChild(typeInput);
+
+                const formatInput = document.createElement('input');
+                formatInput.type = 'hidden';
+                formatInput.name = 'format';
+                formatInput.value = format;
+                form.appendChild(formatInput);
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                showErrorModal('Error al exportar', 'Error al exportar el reporte');
+            }
+        }
+    </script>
+
+    <style>
+        .avatar-sm {
+            width: 40px;
+            height: 40px;
+        }
+
+        .articulo-row:hover {
+            background-color: rgba(13, 110, 253, 0.02);
+        }
+
+        .badge {
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+
+        .filter-btn.active {
+            font-weight: 600;
+        }
+
+        .spin {
+            animation: spinAnimation 0.5s linear infinite;
+        }
+
+        .tooltip-inner {
+            background-color: #1a1d23 !important;
+            color: #ffffff !important;
+        }
+
+        .tooltip-arrow::before {
+            border-top-color: #1a1d23 !important;
+        }
+
+        /* Estilos para los modales */
+        .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-footer {
+            border-radius: 0 0 15px 15px;
+        }
+
+        /* Estilos para el modal de carga */
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        /* Animación suave para mostrar/ocultar modales */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        @@keyframes spinAnimation {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+}
+
+@functions {
+    string GetStockBadge(int stock)
+    {
+        return stock switch
+        {
+            0 => "bg-danger",
+            < 10 => "bg-warning text-dark",
+            _ => "bg-success"
+        };
+    }
+}

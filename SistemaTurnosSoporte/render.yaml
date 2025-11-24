@@ -1,0 +1,14 @@
+Set-Content -Path "render.yaml" -Value @'
+services:
+  - type: web
+    name: sistema-turnos-web
+    env: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: DOTNET_CLI_TELEMETRY_OPTOUT
+        value: 1
+'@

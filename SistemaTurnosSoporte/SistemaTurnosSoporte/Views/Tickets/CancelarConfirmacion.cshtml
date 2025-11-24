@@ -1,0 +1,335 @@
+﻿@model SIGESTEC.API.DTOs.TicketDTO
+
+@{
+    ViewData["Title"] = "Confirmar Cancelación";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow border-0 mt-4">
+                <div class="card-header bg-warning text-white py-3">
+                    <h2 class="h5 mb-0"><i class="bi bi-exclamation-triangle me-2"></i> @ViewData["Title"]</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i>
+                        ¿Estás seguro de que deseas cancelar este ticket? Esta acción no se puede deshacer.
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Detalles del Ticket</h5>
+                        <p><strong>ID:</strong> #@Model.Id</p>
+                        <p><strong>Título:</strong> @Model.Titulo</p>
+                        <p><strong>Tipo:</strong> @Model.TipoProblema</p>
+                        <p><strong>Estado actual:</strong> <span class="badge @GetStatusBadge(Model.Estado)">@Model.Estado</span></p>
+                        <p><strong>Fecha creación:</strong> @Model.FechaCreacion.ToString("yyyy-MM-dd HH:mm")</p>
+                    </div>
+
+                    <form id="cancelForm" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="mb-3">
+                            <label for="comentario" class="form-label fw-bold">Razón de cancelación *</label>
+                            <textarea id="comentario" name="comentario" class="form-control" rows="3"
+                                      placeholder="Explique por qué desea cancelar este ticket..." required></textarea>
+                            <div class="form-text">Este comentario será registrado en el historial del ticket.</div>
+                            <div class="invalid-feedback" id="comentarioError"></div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="MisSolicitudes" class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left me-1"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="submitButton">
+                                <i class="bi bi-x-circle me-1"></i> Confirmar Cancelación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Carga -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+                <h6 class="mb-2">Procesando...</h6>
+                <p id="loadingModalMessage" class="text-muted mb-0 small">Por favor espere</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito/Error -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success display-4" id="successModalIcon"></i>
+                </div>
+                <h5 id="successModalTitle" class="mb-3">¡Éxito!</h5>
+                <p id="successModalMessage" class="text-muted mb-4">La operación se completó correctamente.</p>
+                <button type="button" class="btn btn-success w-100" id="successModalButton" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirmar Cancelación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning display-4"></i>
+                </div>
+                <h6 class="mb-3">¿Está completamente seguro de que desea cancelar este ticket?</h6>
+                <p class="text-muted small">Esta acción no se puede deshacer y quedará registrada en el historial.</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmCancelBtn">
+                    <i class="bi bi-check-circle me-2"></i>Sí, Cancelar Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Envío del formulario con AJAX
+            $('#cancelForm').on('submit', function(e) {
+                e.preventDefault();
+
+                if (validarFormulario()) {
+                    // Mostrar modal de confirmación
+                    $('#confirmationModal').modal('show');
+                }
+            });
+
+            // Confirmar cancelación
+            $('#confirmCancelBtn').click(function() {
+                $('#confirmationModal').modal('hide');
+                enviarCancelacion();
+            });
+
+            // Validar comentario en tiempo real
+            $('#comentario').on('input', function() {
+                const comentario = $(this).val().trim();
+                if (comentario) {
+                    $(this).removeClass('is-invalid');
+                    $('#comentarioError').text('');
+                }
+            });
+        });
+
+        function validarFormulario() {
+            let isValid = true;
+
+            // Limpiar errores anteriores
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').text('');
+
+            // Validar comentario
+            const comentario = $('#comentario').val().trim();
+            if (!comentario) {
+                $('#comentario').addClass('is-invalid');
+                $('#comentarioError').text('Por favor, ingrese una razón para la cancelación.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function enviarCancelacion() {
+            // Mostrar modal de carga
+            showLoadingModal('Cancelando ticket...');
+
+            // Preparar datos del formulario
+            const formData = new FormData();
+            formData.append('id', $('input[name="id"]').val());
+            formData.append('comentario', $('#comentario').val());
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+            // Enviar vía AJAX
+            fetch('@Url.Action("Cancelar", "Tickets")', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Cerrar modal de carga inmediatamente
+                hideLoadingModal();
+
+                if (data.success) {
+                    showSuccessModal('Ticket Cancelado', 'El ticket se ha cancelado exitosamente.');
+
+                    // Redirigir después de 2 segundos
+                    setTimeout(() => {
+                        window.location.href = data.redirectUrl || '@Url.Action("MisSolicitudes", "Tickets")';
+                    }, 2000);
+                } else {
+                    // Mostrar errores del servidor
+                    mostrarErroresServidor(data.errors);
+                }
+            })
+            .catch(error => {
+                // Cerrar modal de carga inmediatamente en caso de error
+                hideLoadingModal();
+                showErrorModal('Error', 'No se pudo cancelar el ticket. Intente nuevamente.');
+                console.error('Error:', error);
+            });
+        }
+
+        function mostrarErroresServidor(errors) {
+            if (errors && typeof errors === 'object') {
+                let errorMessages = [];
+
+                // Mostrar errores específicos por campo
+                Object.keys(errors).forEach(key => {
+                    const errorId = `#${key}Error`;
+                    const errorMessage = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
+
+                    if ($(errorId).length) {
+                        $(errorId).text(errorMessage);
+                        $(`#${key}`).addClass('is-invalid');
+                    }
+                    errorMessages.push(errorMessage);
+                });
+
+                if (errorMessages.length > 0) {
+                    showErrorModal('Error de validación', errorMessages.join('<br>'));
+                }
+            } else {
+                showErrorModal('Error', 'Ocurrió un error inesperado al procesar la solicitud.');
+            }
+        }
+
+        // === SISTEMA DE NOTIFICACIONES MODALES ===
+        function showLoadingModal(message = 'Procesando solicitud...') {
+            $('#loadingModalMessage').text(message);
+            $('#loadingModal').modal('show');
+        }
+
+        function hideLoadingModal() {
+            $('#loadingModal').modal('hide');
+        }
+
+        function showSuccessModal(title, message, autoClose = false) {
+            $('#successModalIcon').removeClass('text-danger bi-exclamation-triangle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-success bi-check-circle-fill');
+            $('#successModalButton').removeClass('btn-danger btn-warning').addClass('btn-success');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 3000);
+            }
+        }
+
+        function showErrorModal(title, message, autoClose = true) {
+            $('#successModalIcon').removeClass('text-success bi-check-circle-fill text-warning bi-exclamation-triangle-fill')
+                                 .addClass('text-danger bi-exclamation-triangle-fill');
+            $('#successModalButton').removeClass('btn-success btn-warning').addClass('btn-danger');
+            $('#successModalTitle').text(title);
+            $('#successModalMessage').text(message);
+            $('#successModal').modal('show');
+
+            if (autoClose) {
+                setTimeout(() => {
+                    if ($('#successModal').is(':visible')) {
+                        $('#successModal').modal('hide');
+                    }
+                }, 4000);
+            }
+        }
+    </script>
+
+    <style>
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        /* Estilos para los modales */
+        #successModal .modal-content,
+        #loadingModal .modal-content,
+        #confirmationModal .modal-content {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #successModal .modal-body,
+        #loadingModal .modal-body {
+            padding: 2.5rem;
+        }
+
+        #loadingModal .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        #loadingModal .spinner-border {
+            border-width: 0.3em;
+        }
+
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+}
+
+@functions {
+    string GetStatusBadge(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "resuelto" => "bg-success",
+            "cancelado" => "bg-secondary",
+            "en progreso" => "bg-primary",
+            _ => "bg-warning text-dark"
+        };
+    }
+}

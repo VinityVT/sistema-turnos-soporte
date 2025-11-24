@@ -1,0 +1,23 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-11-06 13:22:41.060
+Email: Haru@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+Remote IP: ::1
+
+JWT TOKEN DETAILS:
+Issuer: https://localhost:7181
+Valid To: 11/7/2025 8:22:41 AM
+Claims:
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: d0a016b9-2d52-48e6-a510-b146e5434405
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress: Haru@gmail.com
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: Raquel
+EsTecnico: True
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Tecnico
+exp: 1762503761
+iss: https://localhost:7181
+aud: https://localhost:7094
+
+AUTHENTICATION SUCCESSFUL
+Roles assigned: Tecnico
+Auth properties: Microsoft.AspNetCore.Authentication.AuthenticationProperties

@@ -1,0 +1,17 @@
+ERROR EN CREACIÓN DE USUARIO:
+Timestamp: 2025-09-01 10:48:50.939
+User: Administrador
+NombreCompleto: Juan Carlos
+Email: Juanzito@gmail.com
+UserType: Tecnico
+Telefono: 
+Departamento: 
+Posicion: 
+Exception Type: System.Net.Http.HttpRequestException
+Message: Response status code does not indicate success: 500 (Internal Server Error).
+Stack Trace:
+   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at SistemaSoporte.Services.ApiService.PostAsync[T](String endpoint, Object data) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Services\ApiService.cs:line 85
+   at SistemaSoporte.Controllers.AdminController.CreateUser(String nombreCompleto, String email, String password, String userType, String telefono, String departamento, String posicion) in C:\Users\oomap\source\repos\SistemaTurnosSoporte\SistemaTurnosSoporte\Controllers\AdminController.cs:line 311
+
+Inner Exception: N/A

@@ -1,0 +1,171 @@
+﻿@model SistemaSoporte.Models.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="text-center">@ViewData["Title"]</h2>
+            </div>
+            <div class="card-body">
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <form asp-action="Login" method="post" id="loginForm">
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                    <!-- Mostrar errores generales -->
+                    @if (ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @foreach (var error in ViewData.ModelState[string.Empty].Errors)
+                            {
+                                <span>@error.ErrorMessage</span>
+                            }
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Email" class="form-label">Correo Electrónico</label>
+                        <input asp-for="Email" class="form-control" autocomplete="username" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Password" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <input asp-for="Password" type="password" class="form-control"
+                                   autocomplete="current-password" id="passwordInput" />
+                            <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger"></span>
+
+                        <!-- Indicador de mayúsculas -->
+                        <div id="capsLockWarning" class="alert alert-warning mt-2 py-2" style="display: none;">
+                            <small><i class="bi bi-exclamation-triangle me-1"></i>Las mayúsculas están activadas</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group form-check mb-3">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">Recordar mi sesión</label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="loginButton">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        ¿Problemas para acceder? <a href="#" class="text-decoration-none">Contactar al administrador</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Detectar mayúsculas
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            const capsLockWarning = document.getElementById('capsLockWarning');
+            const togglePassword = document.getElementById('togglePassword');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            // Detectar tecla presionada
+            passwordInput.addEventListener('keyup', function(e) {
+                if (e.getModifierState && e.getModifierState('CapsLock')) {
+                    capsLockWarning.style.display = 'block';
+                } else {
+                    capsLockWarning.style.display = 'none';
+                }
+            });
+
+            // También verificar al enfocar el campo
+            passwordInput.addEventListener('focus', function(e) {
+                if (e.getModifierState && e.getModifierState('CapsLock')) {
+                    capsLockWarning.style.display = 'block';
+                }
+            });
+
+            passwordInput.addEventListener('blur', function() {
+                capsLockWarning.style.display = 'none';
+            });
+
+            // Mostrar/ocultar contraseña
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                // Cambiar ícono
+                if (type === 'text') {
+                    toggleIcon.classList.remove('bi-eye');
+                    toggleIcon.classList.add('bi-eye-slash');
+                } else {
+                    toggleIcon.classList.remove('bi-eye-slash');
+                    toggleIcon.classList.add('bi-eye');
+                }
+            });
+
+            // Limpiar mensajes de error al comenzar a editar
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const errorSpan = this.nextElementSibling;
+                    if (errorSpan && errorSpan.classList.contains('text-danger')) {
+                        errorSpan.textContent = '';
+                    }
+
+                    // Limpiar errores generales cuando el usuario empiece a escribir
+                    const generalError = document.querySelector('.alert-danger');
+                    if (generalError && this.value.trim() !== '') {
+                        generalError.style.display = 'none';
+                    }
+                });
+            });
+
+            // Mostrar botón de carga durante el envío
+            document.getElementById('loginForm').addEventListener('submit', function() {
+                const loginButton = document.getElementById('loginButton');
+                loginButton.disabled = true;
+                loginButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Iniciando sesión...';
+            });
+        });
+    </script>
+
+    <style>
+        #capsLockWarning {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            margin-top: 5px;
+        }
+
+        .input-group .btn {
+            border-left: 0;
+        }
+
+        .input-group .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+    </style>
+}

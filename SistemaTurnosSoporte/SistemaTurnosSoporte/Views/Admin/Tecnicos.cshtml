@@ -1,0 +1,161 @@
+﻿@model List<SIGESTEC.API.DTOs.UsuarioRespuestaDTO>
+@{
+    ViewData["Title"] = "Gestión de Técnicos - Administración";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 text-white"><i class="bi bi-people text-primary me-2"></i> @ViewData["Title"]</h2>
+        <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver al Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow border-0 bg-dark">
+        <div class="card-header bg-dark py-3 border-secondary">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h3 class="h6 mb-0 text-white">Técnicos del sistema</h3>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-secondary border-secondary text-white" placeholder="Buscar técnico..." id="searchInput">
+                        <button class="btn btn-outline-secondary border-secondary" type="button" id="searchButton">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0 bg-dark">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 table-dark">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Nombre</th>
+                            <th>Email</th>
+                            <th>Es Técnico</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var tecnico in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">@tecnico.NombreCompleto</td>
+                                    <td>@tecnico.Email</td>
+                                    <td>
+                                        <span class="badge @(tecnico.EsTecnico ? "bg-success" : "bg-secondary")">
+                                            @(tecnico.EsTecnico ? "Sí" : "No")
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" title="Editar" data-bs-toggle="tooltip">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" title="Ver detalles" data-bs-toggle="tooltip">
+                                                <i class="bi bi-info-circle"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="bi bi-people display-4 text-muted"></i>
+                                    <p class="mt-2 text-muted">No hay técnicos registrados</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="card-footer bg-dark border-secondary py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">Mostrando @Model.Count técnicos</small>
+                    <button class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i> Agregar Técnico
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Inicializar tooltips
+            $('[data-bs-toggle="tooltip"]').tooltip({
+                template: '<div class="tooltip" role="tooltip"><div class="tooltip-inner bg-dark"></div><div class="tooltip-arrow"></div></div>'
+            });
+
+            $('#searchButton').click(function() {
+                const searchText = $('#searchInput').val().toLowerCase();
+                $('table tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(searchText));
+                });
+            });
+
+            $('#searchInput').on('keyup', function() {
+                const searchText = $(this).val().toLowerCase();
+                $('table tbody tr').each(function() {
+                    const rowText = $(this).text().toLowerCase();
+                    $(this).toggle(rowText.includes(searchText));
+                });
+            });
+        });
+    </script>
+
+    <style>
+        .tooltip-inner {
+            background-color: #1a1d23 !important;
+            color: #ffffff !important;
+        }
+
+        .tooltip-arrow::before {
+            border-top-color: #1a1d23 !important;
+        }
+
+        /* Estilos específicos para la tabla oscura */
+        .table-dark {
+            --bs-table-bg: #161b22;
+            --bs-table-color: #ffffff;
+            --bs-table-border-color: #30363d;
+        }
+
+            .table-dark tbody tr:hover {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+
+        .bg-dark {
+            background-color: #161b22 !important;
+        }
+
+        .border-secondary {
+            border-color: #30363d !important;
+        }
+
+        .form-control.bg-secondary {
+            background-color: #21262d !important;
+            border-color: #30363d !important;
+            color: #ffffff !important;
+        }
+
+            .form-control.bg-secondary::placeholder {
+                color: #8b949e !important;
+            }
+    </style>
+}

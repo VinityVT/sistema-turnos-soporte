@@ -1,0 +1,23 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-09-12 12:00:07.730
+Email: NSubaru123@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0
+Remote IP: ::1
+
+JWT TOKEN DETAILS:
+Issuer: https://localhost:7181
+Valid To: 9/13/2025 7:00:08 AM
+Claims:
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: 23801f2a-8ac7-495e-b781-2817fce4fa4e
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress: NSubaru123@gmail.com
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: Subaru Natsuki
+EsTecnico: True
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Tecnico
+exp: 1757746808
+iss: https://localhost:7181
+aud: https://localhost:7094
+
+AUTHENTICATION SUCCESSFUL
+Roles assigned: Tecnico
+Auth properties: Microsoft.AspNetCore.Authentication.AuthenticationProperties

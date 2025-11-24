@@ -1,0 +1,23 @@
+LOGIN ATTEMPT DETAILS:
+Timestamp: 2025-09-03 11:00:41.750
+Email: buns@gmail.com
+RememberMe: False
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0
+Remote IP: ::1
+
+JWT TOKEN DETAILS:
+Issuer: https://localhost:7181
+Valid To: 9/4/2025 6:00:42 AM
+Claims:
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier: 4d663bd5-1c3e-4ace-9615-9bcbdd423d18
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress: buns@gmail.com
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name: Daniela
+EsTecnico: True
+http://schemas.microsoft.com/ws/2008/06/identity/claims/role: Tecnico
+exp: 1756965642
+iss: https://localhost:7181
+aud: https://localhost:7094
+
+AUTHENTICATION SUCCESSFUL
+Roles assigned: Tecnico
+Auth properties: Microsoft.AspNetCore.Authentication.AuthenticationProperties
